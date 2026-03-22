@@ -5,8 +5,13 @@ class Config:
     training_data_path: str = "data/dataset/dataset.csv"
     validation_data_path: str = "data/dataset/All_mail_Including_Spam_and_Trash.mbox"
     OUTPUT_BASE_DIR: str = "outputs"
+<<<<<<< HEAD
     model_path: str = "outputs/2025-12-25_14-02-05/models/SVM_model.pkl"
     feature_path: str = "outputs/2025-12-25_14-02-05/models/vectorizer.pkl"
+=======
+    model_path: str = "outputs/2026-03-21_15-14-51/models/SVM_model.pkl"
+    feature_path: str = "outputs/2026-03-21_15-14-51/models/vectorizer.pkl"
+>>>>>>> feature/search-history
 
 class ModelConfig:
     models = {
