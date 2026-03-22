@@ -35,7 +35,7 @@ def _get_db_config() -> dict:
         "host":     os.environ.get("DB_HOST", "localhost"),
         "port":     int(os.environ.get("DB_PORT", 3306)),
         "user":     os.environ.get("DB_USER", "root"),
-        "password": os.environ.get("DB_PASSWORD", "123456"),
+        "password": os.environ.get("DB_PASSWORD", ""),
         "database": os.environ.get("DB_NAME", "spam_detection"),
         "charset":  "utf8mb4",
         "collation": "utf8mb4_unicode_ci",

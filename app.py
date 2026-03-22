@@ -120,7 +120,7 @@ def _sidebar_login_form() -> None:
     st.sidebar.subheader("🔑 Đăng nhập")
     with st.sidebar.form("login_form", clear_on_submit=False):
         username = st.text_input("Tên đăng nhập", max_chars=12)
-        password = st.text_input("Mật khẩu", type="password", max_chars=12)
+        password = st.text_input("Mật khẩu", type="password")
         submitted = st.form_submit_button("Đăng nhập", use_container_width=True)
 
     if submitted:
@@ -146,7 +146,7 @@ def _sidebar_register_form() -> None:
     st.sidebar.subheader("📝 Đăng ký")
     with st.sidebar.form("register_form", clear_on_submit=True):
         username = st.text_input("Tên đăng nhập (tối đa 12 ký tự)", max_chars=12)
-        password = st.text_input("Mật khẩu (tối đa 12 ký tự)", type="password", max_chars=12)
+        password = st.text_input("Mật khẩu", type="password")
         confirm  = st.text_input("Xác nhận mật khẩu", type="password", max_chars=12)
         submitted = st.form_submit_button("Tạo tài khoản", use_container_width=True)
 
