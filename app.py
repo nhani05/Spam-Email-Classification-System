@@ -29,6 +29,7 @@ from src.auth.auth import (
     get_batch_history,
 )
 from src.database.db import ping as db_ping
+from src.components.dashboard import show_dashboard
 
 # ══════════════════════════════════════════════════════════════════════════
 # Page configuration
@@ -381,13 +382,19 @@ def main() -> None:
 
     # ── Tabs (vary by auth state) ─────────────────────────────────────────
     if st.session_state["logged_in"]:
-        tab_single, tab_batch, tab_history = st.tabs(
-            ["📨 Email Đơn", "📦 File MBOX", "📋 Lịch sử"]
+        tab_dashboard, tab_single, tab_batch, tab_history = st.tabs(
+            ["📊 Dashboard", "📨 Email Đơn", "📦 File MBOX", "📋 Lịch sử"]
         )
+
+        with tab_dashboard:
+            show_dashboard(st.session_state["user_id"])
+
         with tab_single:
             _tab_single_email()
+
         with tab_batch:
             _tab_batch()
+
         with tab_history:
             _tab_history()
     else:
