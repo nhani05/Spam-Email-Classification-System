@@ -30,6 +30,7 @@ from src.auth.auth import (
 )
 from src.database.db import ping as db_ping
 from src.components.dashboard import show_dashboard
+from src.security import EmailThreatAnalyzer, QRImageAnalyzer
 
 # ══════════════════════════════════════════════════════════════════════════
 # Page configuration
@@ -60,6 +61,16 @@ for key, default in _SESSION_DEFAULTS.items():
 @st.cache_resource
 def get_pipeline() -> PredictionPipeline:
     return PredictionPipeline(load_models=True)
+
+
+@st.cache_resource
+def get_qr_analyzer() -> QRImageAnalyzer:
+    return QRImageAnalyzer()
+
+
+@st.cache_resource
+def get_email_threat_analyzer() -> EmailThreatAnalyzer:
+    return EmailThreatAnalyzer()
 
 
 try:
@@ -201,6 +212,7 @@ def _tab_single_email() -> None:
         with st.spinner("Đang phân tích..."):
             try:
                 result = pipeline.predict_single_email(email_text)
+                threat_result = get_email_threat_analyzer().analyze(email_text)
                 prediction = result["prediction"]
                 confidence = result.get("confidence")
 
@@ -212,6 +224,38 @@ def _tab_single_email() -> None:
 
                 if confidence:
                     st.metric("Độ tin cậy", f"{confidence:.1f}%")
+
+                st.subheader("Threat Detection")
+                threat_cols = st.columns(4)
+                threat_cols[0].metric("Overall risk", threat_result.risk_score)
+                threat_cols[1].metric("Phishing", threat_result.phishing_score)
+                threat_cols[2].metric("Fake link", threat_result.fake_link_score)
+                threat_cols[3].metric("Malware", threat_result.malware_score)
+
+                if threat_result.risk_score >= 80:
+                    st.error(f"Threat verdict: {threat_result.verdict} ({threat_result.risk_level})")
+                elif threat_result.risk_score >= 35:
+                    st.warning(f"Threat verdict: {threat_result.verdict} ({threat_result.risk_level})")
+                else:
+                    st.success(f"Threat verdict: {threat_result.verdict} ({threat_result.risk_level})")
+
+                with st.expander("Why this result?", expanded=threat_result.risk_score >= 35):
+                    for reason in threat_result.reasons:
+                        st.write(f"- {reason}")
+
+                    if threat_result.risky_files:
+                        st.write("Risky file indicators:")
+                        for filename in threat_result.risky_files:
+                            st.code(filename, language="text")
+
+                    if threat_result.urls:
+                        st.write("Detected links:")
+                        for url_info in threat_result.urls:
+                            st.write(
+                                f"- `{url_info['verdict']}` | score `{url_info['risk_score']}` | "
+                                f"domain `{url_info['domain'] or 'N/A'}`"
+                            )
+                            st.code(url_info["url"], language="text")
 
                 # ── Save if logged in ───────────────────────────────────
                 if st.session_state["logged_in"] and check_db():
@@ -308,6 +352,75 @@ def _tab_batch() -> None:
                 st.error(f"Lỗi xử lý file: {exc}")
 
 
+def _tab_qr_image_security() -> None:
+    """Analyze QR codes embedded in suspicious email images."""
+    st.header("QR Image Threat Detection")
+    st.caption(
+        "Upload an email image, receipt screenshot, or QR payment image. "
+        "The system extracts QR URLs and scores phishing risk without opening the link."
+    )
+
+    uploaded_image = st.file_uploader(
+        "Upload image",
+        type=["png", "jpg", "jpeg", "webp", "bmp"],
+        key="qr_image_upload",
+    )
+
+    if uploaded_image is None:
+        return
+
+    image_bytes = uploaded_image.getvalue()
+    st.image(image_bytes, caption=uploaded_image.name, use_container_width=True)
+
+    if not st.button("Analyze QR image", type="primary"):
+        return
+
+    analyzer = get_qr_analyzer()
+    with st.spinner("Analyzing QR image..."):
+        try:
+            result = analyzer.analyze_image_bytes(image_bytes)
+        except Exception as exc:
+            st.error(f"Could not analyze image: {exc}")
+            return
+
+    if result.warnings:
+        for warning in result.warnings:
+            st.warning(warning)
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("QR found", result.qr_count)
+    col2.metric("Risk score", result.max_risk_score)
+    col3.metric("Risk level", result.risk_level)
+
+    if not result.qr_found:
+        st.info("No QR code was detected in this image.")
+        return
+
+    if result.max_risk_score >= 80:
+        st.error(f"Final verdict: {result.final_verdict}")
+    elif result.max_risk_score >= 35:
+        st.warning(f"Final verdict: {result.final_verdict}")
+    else:
+        st.success(f"Final verdict: {result.final_verdict}")
+
+    st.subheader("Detected QR links")
+    for index, qr_result in enumerate(result.qr_results, start=1):
+        title = f"QR #{index}: {qr_result['verdict']} - {qr_result['risk_score']}/100"
+        with st.expander(title, expanded=True):
+            st.write("Decoded value:")
+            st.code(qr_result["url"], language="text")
+            st.write("Final destination:")
+            st.code(qr_result["final_url"], language="text")
+            st.write(f"Domain: `{qr_result['domain']}`")
+
+            st.write("Reasons:")
+            for reason in qr_result["reasons"]:
+                st.write(f"- {reason}")
+
+            st.write("Extracted URL features:")
+            st.json(qr_result["features"])
+
+
 def _tab_history() -> None:
     """Prediction history — authenticated users only."""
     st.header("📋 Lịch sử Phân loại")
@@ -391,6 +504,8 @@ def main() -> None:
 
         with tab_single:
             _tab_single_email()
+            st.divider()
+            _tab_qr_image_security()
 
         with tab_batch:
             _tab_batch()
@@ -403,6 +518,8 @@ def main() -> None:
         )
         with tab_single:
             _tab_single_email()
+            st.divider()
+            _tab_qr_image_security()
         with tab_batch:
             _tab_batch()   # shows the "please log in" message internally
 
