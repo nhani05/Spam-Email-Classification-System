@@ -6,8 +6,9 @@ He thong phan loai email spam/ham bang Machine Learning, co giao dien Streamlit 
 
 - Phan loai noi dung email thanh `Spam` hoac `Ham`.
 - Hien thi do tin cay cua du doan neu model ho tro `predict_proba`.
-- Phan tich dau hieu de doa trong email: phishing, fake link, malware va file dang nghi.
-- Phan tich anh co QR code va cham diem rui ro URL trong QR.
+- Phan tich dau hieu de doa trong email: phishing, fake link, malware, file dang nghi va URL dang nghi.
+- Phan tich truc tiep mot hoac nhieu URL, cham diem rui ro `0-100`, hien domain dich, ly do va dac trung URL.
+- Phan tich anh co QR code/quishing, giai ma QR payload va cham diem rui ro URL ma khong mo lien ket.
 - Xu ly hang loat email tu file MBOX va xuat ket qua CSV.
 - Dang ky, dang nhap va luu lich su du doan bang MySQL.
 - Dashboard va lich su cho nguoi dung da dang nhap.
@@ -151,10 +152,12 @@ Sau khi huan luyen, cap nhat `model_path` va `feature_path` trong `src/config/co
 
 ## Su dung ung dung
 
-- Khach: kiem tra email don va phan tich QR image.
+- Khach: kiem tra email don, phan tich URL truc tiep va phan tich QR image/quishing.
 - Nguoi dung da dang nhap: co them dashboard, xu ly file MBOX va xem lich su.
 - File MBOX ho tro upload qua tab `File MBOX`.
 - Ket qua batch co the tai xuong duoi dang CSV.
+- Muc `Phishing URL Detection` chap nhan nhieu URL, moi dong mot URL. He thong danh dau cac dau hieu nhu short link, redirect long nhau, ky tu encode, URL qua dai, domain nhieu so/gach noi, TLD rui ro cao va gia mao thuong hieu.
+- Muc `Quishing Detection` nhan anh `png`, `jpg`, `jpeg`, `webp`, `bmp`, giai ma QR payload va dung chung bo cham diem URL; voi QR thanh toan khong phai URL, he thong yeu cau kiem tra nguoi nhan, ngan hang va so tai khoan truoc khi chuyen tien.
 
 ## Tai lieu du an
 

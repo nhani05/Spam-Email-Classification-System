@@ -30,7 +30,7 @@ from src.auth.auth import (
 )
 from src.database.db import ping as db_ping
 from src.components.dashboard import show_dashboard
-from src.security import EmailThreatAnalyzer, QRImageAnalyzer
+from src.security import EmailThreatAnalyzer, QRImageAnalyzer, URLRiskModel
 
 # ══════════════════════════════════════════════════════════════════════════
 # Page configuration
@@ -71,6 +71,11 @@ def get_qr_analyzer() -> QRImageAnalyzer:
 @st.cache_resource
 def get_email_threat_analyzer() -> EmailThreatAnalyzer:
     return EmailThreatAnalyzer()
+
+
+@st.cache_resource
+def get_url_risk_model() -> URLRiskModel:
+    return URLRiskModel()
 
 
 try:
@@ -185,6 +190,69 @@ def _sidebar_register_form() -> None:
 
 
 # ══════════════════════════════════════════════════════════════════════════
+def _show_url_result(url_info: dict, title_prefix: str = "URL", expanded: bool = True) -> None:
+    title = f"{title_prefix}: {url_info['verdict']} - {url_info['risk_score']}/100"
+    with st.expander(title, expanded=expanded):
+        cols = st.columns(3)
+        cols[0].metric("Risk score", f"{url_info['risk_score']}/100")
+        cols[1].metric("Risk level", url_info["risk_level"])
+        cols[2].metric("Domain", url_info["domain"] or "N/A")
+
+        st.write("Original value:")
+        st.code(url_info["url"], language="text")
+        st.write("Final destination:")
+        st.code(url_info["final_url"], language="text")
+
+        st.write("Reasons:")
+        for reason in url_info["reasons"]:
+            st.write(f"- {reason}")
+
+        st.write("Extracted URL features:")
+        st.json(url_info["features"])
+
+
+def _tab_url_phishing() -> None:
+    """Direct URL phishing analysis."""
+    st.header("Phishing URL Detection")
+    st.caption(
+        "Paste one or more URLs. The analyzer scores risk locally and does not open the links."
+    )
+
+    url_text = st.text_area(
+        "URLs to analyze",
+        height=120,
+        placeholder="https://paypa1-login.xyz/verify\nbit.ly/example",
+    )
+
+    if not st.button("Analyze URLs", type="primary"):
+        return
+
+    candidates = [line.strip() for line in url_text.splitlines() if line.strip()]
+    if not candidates:
+        st.warning("Please paste at least one URL.")
+        return
+
+    analyzer = get_url_risk_model()
+    results = [analyzer.analyze(candidate).to_dict() for candidate in candidates]
+    max_score = max(result["risk_score"] for result in results)
+    suspicious_count = sum(result["risk_score"] >= 35 for result in results)
+
+    cols = st.columns(3)
+    cols[0].metric("URLs analyzed", len(results))
+    cols[1].metric("Suspicious URLs", suspicious_count)
+    cols[2].metric("Max risk score", f"{max_score}/100")
+
+    if max_score >= 80:
+        st.error("At least one URL has critical phishing indicators.")
+    elif max_score >= 35:
+        st.warning("At least one URL has suspicious phishing indicators.")
+    else:
+        st.success("No strong phishing URL signal was found.")
+
+    for index, result in enumerate(results, start=1):
+        _show_url_result(result, title_prefix=f"URL #{index}", expanded=result["risk_score"] >= 35)
+
+
 # Main tabs
 # ══════════════════════════════════════════════════════════════════════════
 def _tab_single_email() -> None:
@@ -260,14 +328,14 @@ def _tab_single_email() -> None:
                         for filename in threat_result["risky_files"]:
                             st.code(filename, language="text")
 
-                    if threat_result["urls"]:
-                        st.write("Detected links:")
-                        for url_info in threat_result["urls"]:
-                            st.write(
-                                f"- `{url_info['verdict']}` | score `{url_info['risk_score']}` | "
-                                f"domain `{url_info['domain'] or 'N/A'}`"
-                            )
-                            st.code(url_info["url"], language="text")
+                if threat_result["urls"]:
+                    st.subheader("Phishing URL Detection")
+                    for index, url_info in enumerate(threat_result["urls"], start=1):
+                        _show_url_result(
+                            url_info,
+                            title_prefix=f"Detected URL #{index}",
+                            expanded=url_info["risk_score"] >= 35,
+                        )
 
                 # ── Save if logged in ───────────────────────────────────
                 if st.session_state["logged_in"] and check_db():
@@ -366,10 +434,10 @@ def _tab_batch() -> None:
 
 def _tab_qr_image_security() -> None:
     """Analyze QR codes embedded in suspicious email images."""
-    st.header("QR Image Threat Detection")
+    st.header("Quishing Detection")
     st.caption(
         "Upload an email image, receipt screenshot, or QR payment image. "
-        "The system extracts QR URLs and scores phishing risk without opening the link."
+        "The system decodes QR payloads and scores phishing risk without opening the link."
     )
 
     uploaded_image = st.file_uploader(
@@ -415,22 +483,9 @@ def _tab_qr_image_security() -> None:
     else:
         st.success(f"Final verdict: {result.final_verdict}")
 
-    st.subheader("Detected QR links")
+    st.subheader("Detected QR payloads")
     for index, qr_result in enumerate(result.qr_results, start=1):
-        title = f"QR #{index}: {qr_result['verdict']} - {qr_result['risk_score']}/100"
-        with st.expander(title, expanded=True):
-            st.write("Decoded value:")
-            st.code(qr_result["url"], language="text")
-            st.write("Final destination:")
-            st.code(qr_result["final_url"], language="text")
-            st.write(f"Domain: `{qr_result['domain']}`")
-
-            st.write("Reasons:")
-            for reason in qr_result["reasons"]:
-                st.write(f"- {reason}")
-
-            st.write("Extracted URL features:")
-            st.json(qr_result["features"])
+        _show_url_result(qr_result, title_prefix=f"QR #{index}", expanded=True)
 
 
 def _tab_history() -> None:
@@ -517,6 +572,8 @@ def main() -> None:
         with tab_single:
             _tab_single_email()
             st.divider()
+            _tab_url_phishing()
+            st.divider()
             _tab_qr_image_security()
 
         with tab_batch:
@@ -530,6 +587,8 @@ def main() -> None:
         )
         with tab_single:
             _tab_single_email()
+            st.divider()
+            _tab_url_phishing()
             st.divider()
             _tab_qr_image_security()
         with tab_batch:

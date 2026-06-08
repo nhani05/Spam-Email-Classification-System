@@ -4,14 +4,17 @@ import matplotlib.pyplot as plt
 from src.auth.auth import get_single_history
 
 
-def show_dashboard(user_id):
-    st.header("📊 Spam Detection Dashboard")
+def show_dashboard(user_id, translate=None):
+    def text(key, default):
+        return translate(key) if translate else default
+
+    st.header(text("dashboard_title", "📊 Spam Detection Dashboard"))
 
     # ===== LOAD DATA (FIX: dùng MySQL qua auth.py) =====
     rows = get_single_history(user_id)
 
     if not rows:
-        st.warning("No data available")
+        st.warning(text("no_data", "No data available"))
         return
 
     df = pd.DataFrame(rows)
@@ -32,7 +35,7 @@ def show_dashboard(user_id):
 
     # ===== KPI =====
     col1, col2, col3 = st.columns(3)
-    col1.metric("📨 Total Emails", total)
+    col1.metric(text("dashboard_total_emails", "📨 Total Emails"), total)
     col2.metric("🚫 Spam %", f"{spam_rate}%")
     col3.metric("✅ Ham %", f"{ham_rate}%")
 
@@ -43,14 +46,14 @@ def show_dashboard(user_id):
 
     # Pie chart
     with col1:
-        st.subheader("Spam vs Ham")
+        st.subheader(text("spam_vs_ham", "Spam vs Ham"))
         fig, ax = plt.subplots()
         ax.pie([spam, ham], labels=["Spam", "Ham"], autopct='%1.1f%%')
         st.pyplot(fig)
 
     # Line chart
     with col2:
-        st.subheader("Emails Over Time")
+        st.subheader(text("emails_over_time", "Emails Over Time"))
         df["date"] = df["created_at"].dt.date
         trend = df.groupby("date").size()
         st.line_chart(trend)
@@ -58,7 +61,7 @@ def show_dashboard(user_id):
     st.divider()
 
     # ===== RECENT =====
-    st.subheader("📜 Recent Emails")
+    st.subheader(text("recent_emails", "📜 Recent Emails"))
 
     recent = df.sort_values("created_at", ascending=False).head(10)
 
