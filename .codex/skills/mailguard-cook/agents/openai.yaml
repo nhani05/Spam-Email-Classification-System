@@ -1,0 +1,4 @@
+interface:
+  display_name: "MailGuard Cook"
+  short_description: "Implement MailGuard AI features end to end"
+  default_prompt: "Use $mailguard-cook to implement a complete MailGuard AI feature."

@@ -9,6 +9,8 @@ from src.utils.state import PredictionState
 from src.utils.logger import get_logger
 from src.config.config import Config
 from src.utils.email_utils import extract_body, all_recipients, clean_text
+from src.security.email_threat_analyzer import EmailThreatAnalyzer
+from src.security.risk_aggregator import RiskAggregator
 
 logger = get_logger(__name__)
 
@@ -18,6 +20,8 @@ class PredictionPipeline:
         self.mailbox = None
         self.feature_transformer = None
         self.model = None
+        self.threat_analyzer = EmailThreatAnalyzer()
+        self.risk_aggregator = RiskAggregator()
         
         if load_models:
             self._load_models()
@@ -44,10 +48,25 @@ class PredictionPipeline:
         except:
             confidence = None
         
+        threat_result = self.threat_analyzer.analyze(email_body)
+        risk_result = self.risk_aggregator.aggregate_email(
+            prediction=prediction_label,
+            confidence=confidence,
+            threat_result=threat_result,
+        )
+
         return {
             'prediction': prediction_label,
             'confidence': confidence,
-            'raw_prediction': int(prediction[0])
+            'raw_prediction': int(prediction[0]),
+            'risk_score': risk_result.risk_score,
+            'risk_level': risk_result.risk_level,
+            'verdict': risk_result.verdict,
+            'reasons': risk_result.reasons,
+            'recommended_actions': risk_result.recommended_actions,
+            'urls': risk_result.urls,
+            'threat_analysis': threat_result.to_dict(),
+            'risk_analysis': risk_result.to_dict(),
         }
 
     def load_mailbox(self, mailbox_path: str) -> None:
@@ -108,7 +127,27 @@ class PredictionPipeline:
             features = self.feature_transformer.transform([body_text])
             prediction = self.model.predict(features)
             prediction_label = "Spam" if str(prediction[0]) == "0" else "Ham"
+
+            try:
+                prediction_proba = self.model.predict_proba(features)
+                confidence = float(max(prediction_proba[0])) * 100
+            except:
+                confidence = None
+
+            threat_result = self.threat_analyzer.analyze(body_text)
+            risk_result = self.risk_aggregator.aggregate_email(
+                prediction=prediction_label,
+                confidence=confidence,
+                threat_result=threat_result,
+            )
+
             mail["Prediction"] = prediction_label
+            mail["Confidence"] = confidence
+            mail["Risk Score"] = risk_result.risk_score
+            mail["Risk Level"] = risk_result.risk_level
+            mail["Verdict"] = risk_result.verdict
+            mail["Reasons"] = " | ".join(risk_result.reasons)
+            mail["Recommended Actions"] = " | ".join(risk_result.recommended_actions)
         
         end_time = time.time()
         logger.info(f"Prediction completed in {end_time - start_time:.2f} seconds")

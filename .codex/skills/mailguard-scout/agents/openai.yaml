@@ -1,0 +1,4 @@
+interface:
+  display_name: "MailGuard Scout"
+  short_description: "Explore repository context before changes"
+  default_prompt: "Use $mailguard-scout to map the relevant MailGuard AI code before editing."

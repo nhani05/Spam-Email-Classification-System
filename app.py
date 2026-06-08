@@ -212,7 +212,8 @@ def _tab_single_email() -> None:
         with st.spinner("Đang phân tích..."):
             try:
                 result = pipeline.predict_single_email(email_text)
-                threat_result = get_email_threat_analyzer().analyze(email_text)
+                risk_result = result["risk_analysis"]
+                threat_result = result["threat_analysis"]
                 prediction = result["prediction"]
                 confidence = result.get("confidence")
 
@@ -225,32 +226,43 @@ def _tab_single_email() -> None:
                 if confidence:
                     st.metric("Độ tin cậy", f"{confidence:.1f}%")
 
-                st.subheader("Threat Detection")
-                threat_cols = st.columns(4)
-                threat_cols[0].metric("Overall risk", threat_result.risk_score)
-                threat_cols[1].metric("Phishing", threat_result.phishing_score)
-                threat_cols[2].metric("Fake link", threat_result.fake_link_score)
-                threat_cols[3].metric("Malware", threat_result.malware_score)
+                st.subheader("MailGuard Risk Analysis")
+                risk_cols = st.columns(3)
+                risk_cols[0].metric("Risk score", f"{risk_result['risk_score']}/100")
+                risk_cols[1].metric("Risk level", risk_result["risk_level"])
+                risk_cols[2].metric("Verdict", risk_result["verdict"])
 
-                if threat_result.risk_score >= 80:
-                    st.error(f"Threat verdict: {threat_result.verdict} ({threat_result.risk_level})")
-                elif threat_result.risk_score >= 35:
-                    st.warning(f"Threat verdict: {threat_result.verdict} ({threat_result.risk_level})")
+                if risk_result["risk_score"] >= 80:
+                    st.error(f"Final verdict: {risk_result['verdict']} ({risk_result['risk_level']})")
+                elif risk_result["risk_score"] >= 35:
+                    st.warning(f"Final verdict: {risk_result['verdict']} ({risk_result['risk_level']})")
                 else:
-                    st.success(f"Threat verdict: {threat_result.verdict} ({threat_result.risk_level})")
+                    st.success(f"Final verdict: {risk_result['verdict']} ({risk_result['risk_level']})")
 
-                with st.expander("Why this result?", expanded=threat_result.risk_score >= 35):
-                    for reason in threat_result.reasons:
+                st.subheader("Threat Detection Components")
+                threat_cols = st.columns(4)
+                threat_cols[0].metric("ML spam score", risk_result["components"]["ml_spam_score"])
+                threat_cols[1].metric("Phishing", threat_result["phishing_score"])
+                threat_cols[2].metric("Fake link", threat_result["fake_link_score"])
+                threat_cols[3].metric("Malware", threat_result["malware_score"])
+
+                with st.expander("Why this result?", expanded=risk_result["risk_score"] >= 35):
+                    st.write("Reasons:")
+                    for reason in risk_result["reasons"]:
                         st.write(f"- {reason}")
 
-                    if threat_result.risky_files:
+                    st.write("Recommended actions:")
+                    for action in risk_result["recommended_actions"]:
+                        st.write(f"- {action}")
+
+                    if threat_result["risky_files"]:
                         st.write("Risky file indicators:")
-                        for filename in threat_result.risky_files:
+                        for filename in threat_result["risky_files"]:
                             st.code(filename, language="text")
 
-                    if threat_result.urls:
+                    if threat_result["urls"]:
                         st.write("Detected links:")
-                        for url_info in threat_result.urls:
+                        for url_info in threat_result["urls"]:
                             st.write(
                                 f"- `{url_info['verdict']}` | score `{url_info['risk_score']}` | "
                                 f"domain `{url_info['domain'] or 'N/A'}`"
@@ -314,7 +326,7 @@ def _tab_batch() -> None:
 
                     st.subheader("Kết quả mẫu (10 email đầu)")
                     st.dataframe(
-                        df[["Time", "Subject", "Prediction"]].head(10),
+                        df[["Time", "Subject", "Prediction", "Risk Score", "Risk Level", "Verdict"]].head(10),
                         use_container_width=True,
                     )
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "MailGuard Git"
+  short_description: "Inspect diffs and protect user changes"
+  default_prompt: "Use $mailguard-git to summarize repository changes safely."

@@ -1,7 +1,29 @@
 """Security analysis modules for email threat detection."""
 
-from .qr_image_analyzer import QRImageAnalyzer
-from .email_threat_analyzer import EmailThreatAnalyzer
-from .url_risk_model import URLRiskModel
+__all__ = [
+    "EmailThreatAnalyzer",
+    "QRImageAnalyzer",
+    "RiskAggregator",
+    "RiskAnalysisResult",
+    "URLRiskModel",
+]
 
-__all__ = ["EmailThreatAnalyzer", "QRImageAnalyzer", "URLRiskModel"]
+
+def __getattr__(name: str):
+    if name == "EmailThreatAnalyzer":
+        from .email_threat_analyzer import EmailThreatAnalyzer
+
+        return EmailThreatAnalyzer
+    if name in {"RiskAggregator", "RiskAnalysisResult"}:
+        from .risk_aggregator import RiskAggregator, RiskAnalysisResult
+
+        return {"RiskAggregator": RiskAggregator, "RiskAnalysisResult": RiskAnalysisResult}[name]
+    if name == "QRImageAnalyzer":
+        from .qr_image_analyzer import QRImageAnalyzer
+
+        return QRImageAnalyzer
+    if name == "URLRiskModel":
+        from .url_risk_model import URLRiskModel
+
+        return URLRiskModel
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

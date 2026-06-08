@@ -1,0 +1,4 @@
+interface:
+  display_name: "MailGuard Plan"
+  short_description: "Plan MailGuard AI work in clear phases"
+  default_prompt: "Use $mailguard-plan to break a MailGuard AI change into implementation steps."
