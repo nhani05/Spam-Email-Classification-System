@@ -25,12 +25,14 @@ from src.auth.auth import (
     register_user,
     save_single_prediction,
     save_batch_prediction,
+    save_prediction_feedback,
     get_single_history,
     get_batch_history,
 )
 from src.database.db import ping as db_ping
 from src.components.dashboard import show_dashboard
-from src.security import EmailThreatAnalyzer, QRImageAnalyzer, URLRiskModel
+from src.security import CampaignIntelligenceEngine, EmailThreatAnalyzer, QRImageAnalyzer, URLRiskModel
+from src.security.campaign_intelligence import CampaignSummary
 
 # ══════════════════════════════════════════════════════════════════════════
 # Page configuration
@@ -76,6 +78,11 @@ def get_email_threat_analyzer() -> EmailThreatAnalyzer:
 @st.cache_resource
 def get_url_risk_model() -> URLRiskModel:
     return URLRiskModel()
+
+
+@st.cache_resource
+def get_campaign_engine() -> CampaignIntelligenceEngine:
+    return CampaignIntelligenceEngine()
 
 
 try:
@@ -253,6 +260,44 @@ def _tab_url_phishing() -> None:
         _show_url_result(result, title_prefix=f"URL #{index}", expanded=result["risk_score"] >= 35)
 
 
+def _feedback_controls() -> None:
+    prediction_id = st.session_state.get("last_prediction_id")
+    if not st.session_state["logged_in"] or not prediction_id:
+        return
+
+    with st.expander("Prediction feedback", expanded=False):
+        with st.form("single_prediction_feedback"):
+            feedback = st.radio("Was this result correct?", ["correct", "incorrect"], horizontal=True)
+            corrected_label = st.selectbox(
+                "Corrected threat label",
+                [
+                    "Safe",
+                    "Spam",
+                    "Phishing",
+                    "Malware Risk",
+                    "Business Email Compromise",
+                    "Quishing",
+                    "Credential Theft",
+                    "Payment Scam",
+                ],
+            )
+            note = st.text_area("Analyst note", height=80)
+            submitted = st.form_submit_button("Save feedback")
+
+        if submitted:
+            feedback_id = save_prediction_feedback(
+                user_id=st.session_state["user_id"],
+                prediction_id=prediction_id,
+                feedback=feedback,
+                corrected_label=corrected_label if feedback == "incorrect" else None,
+                note=note,
+            )
+            if feedback_id:
+                st.success("Feedback saved for adaptive learning review.")
+            else:
+                st.warning("Feedback could not be saved. Install the adaptive DB migration first.")
+
+
 # Main tabs
 # ══════════════════════════════════════════════════════════════════════════
 def _tab_single_email() -> None:
@@ -295,10 +340,11 @@ def _tab_single_email() -> None:
                     st.metric("Độ tin cậy", f"{confidence:.1f}%")
 
                 st.subheader("MailGuard Risk Analysis")
-                risk_cols = st.columns(3)
+                risk_cols = st.columns(4)
                 risk_cols[0].metric("Risk score", f"{risk_result['risk_score']}/100")
                 risk_cols[1].metric("Risk level", risk_result["risk_level"])
-                risk_cols[2].metric("Verdict", risk_result["verdict"])
+                risk_cols[2].metric("Threat label", risk_result.get("threat_label", result.get("threat_label", "Unknown")))
+                risk_cols[3].metric("Verdict", risk_result["verdict"])
 
                 if risk_result["risk_score"] >= 80:
                     st.error(f"Final verdict: {risk_result['verdict']} ({risk_result['risk_level']})")
@@ -315,6 +361,12 @@ def _tab_single_email() -> None:
                 threat_cols[3].metric("Malware", threat_result["malware_score"])
 
                 with st.expander("Why this result?", expanded=risk_result["risk_score"] >= 35):
+                    st.write("Class scores:")
+                    st.json(result.get("class_scores", {}))
+
+                    st.write("Extracted indicators:")
+                    st.json(result.get("indicators", {}))
+
                     st.write("Reasons:")
                     for reason in risk_result["reasons"]:
                         st.write(f"- {reason}")
@@ -340,18 +392,27 @@ def _tab_single_email() -> None:
                 # ── Save if logged in ───────────────────────────────────
                 if st.session_state["logged_in"] and check_db():
                     try:
-                        save_single_prediction(
+                        prediction_id = save_single_prediction(
                             user_id=st.session_state["user_id"],
                             email_content=email_text,
                             prediction=prediction,
                             confidence=confidence,
+                            threat_metadata={
+                                **risk_result,
+                                "threat_label": risk_result.get("threat_label", result.get("threat_label")),
+                                "indicators": result.get("indicators", {}),
+                            },
                         )
+                        st.session_state["last_prediction_id"] = prediction_id
                         st.caption("✔ Đã lưu vào lịch sử.")
                     except Exception as exc:
                         st.caption(f"⚠ Không thể lưu lịch sử: {exc}")
 
             except Exception as exc:
                 st.error(f"Lỗi phân tích: {exc}")
+
+
+    _feedback_controls()
 
 
 def _tab_batch() -> None:
@@ -381,24 +442,56 @@ def _tab_batch() -> None:
 
                 try:
                     df = pipeline.predict_mbox_file(tmp_path)
+                    campaigns = df.attrs.get("campaigns", getattr(pipeline, "last_campaigns", []))
                     st.write("Columns:", df.columns.tolist())  # thêm tạm để kiểm tra
 
                     spam_count = len(df[df['Prediction'] == 'Spam'])
                     ham_count = len(df[df['Prediction'] == 'Ham'])
 
                     # ── Metrics ─────────────────────────────────────────
-                    col1, col2, col3 = st.columns(3)
+                    col1, col2, col3, col4 = st.columns(4)
                     col1.metric("📧 Tổng email",  len(df))
                     col2.metric("🚨 Spam",         spam_count)
                     col3.metric("✅ Ham",           ham_count)
+                    col4.metric("Campaigns", len(campaigns))
 
                     st.subheader("Kết quả mẫu (10 email đầu)")
                     st.dataframe(
-                        df[["Time", "Subject", "Prediction", "Risk Score", "Risk Level", "Verdict"]].head(10),
+                        df[["Time", "Subject", "Prediction", "Threat Label", "Risk Score", "Risk Level", "Verdict", "Campaign ID"]].head(10),
                         use_container_width=True,
                     )
 
                     # ── Download ─────────────────────────────────────────
+                    if campaigns:
+                        st.subheader("Threat Campaigns")
+                        import pandas as pd
+                        campaign_df = pd.DataFrame(campaigns)
+                        st.dataframe(
+                            campaign_df[["campaign_id", "primary_threat_label", "risk_level", "risk_score", "email_count", "top_domains"]],
+                            use_container_width=True,
+                        )
+                        engine = get_campaign_engine()
+                        campaign_objects = [
+                            CampaignSummary(**{k: item[k] for k in CampaignSummary.__dataclass_fields__ if k in item})
+                            for item in campaigns
+                        ]
+                        st.download_button(
+                            "Download campaign summaries (JSON)",
+                            data=engine.reports_json(campaign_objects),
+                            file_name=f"campaigns_{int(time.time())}.json",
+                            mime="application/json",
+                        )
+                        st.download_button(
+                            "Download first campaign report (Markdown)",
+                            data=engine.markdown_report(campaign_objects[0], df.to_dict("records")),
+                            file_name=f"{campaign_objects[0].campaign_id}_report.md",
+                            mime="text/markdown",
+                        )
+                        with st.expander("First campaign graph data", expanded=False):
+                            st.json(engine.graph_for_campaign(campaign_objects[0], df.to_dict("records")))
+                    else:
+                        st.info("No related threat campaign was detected in this batch.")
+
                     csv = df.to_csv(index=False).encode("utf-8")
                     st.download_button(
                         "⬇️ Tải xuống kết quả (CSV)",
