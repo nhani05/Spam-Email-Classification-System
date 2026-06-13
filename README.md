@@ -163,6 +163,7 @@ Sau khi huan luyen, cap nhat `model_path` va `feature_path` trong `src/config/co
 
 - `docs/PHAN_CONG_TINH_NANG.md`: Phan cong cac tinh nang hien co cho 2 thanh vien.
 - `docs/KE_HOACH_CAI_TIEN_DU_AN.md`: Roadmap nang cap du an thanh MailGuard AI - Email Threat Detection System.
+- `docs/HUONG_DAN_DEMO_DU_AN.md`: Kich ban demo chi tiet, input mau, ket qua mong doi va cach tra loi cau hoi.
 
 ## Huong phat trien
 
@@ -174,6 +175,29 @@ Du an co the duoc nang cap tu Spam Email Classification thanh he thong phan tich
 - Dashboard bao mat theo risk level, risky domain va lich su high risk.
 - Feedback loop de nguoi dung bao ket qua dung/sai.
 - Admin mode de quan ly blacklist/whitelist domain.
+
+## Adaptive Threat Intelligence Platform
+
+Du an da co huong nang cap moi: `MailGuard AI: Adaptive Email Threat Intelligence Platform`.
+Huong nay bien moi email thanh mot security event co cau truc, gom:
+
+- Hybrid threat modeling: ket hop TF-IDF word/char n-gram, numeric security features, URL, QR, attachment va rule score.
+- Threat taxonomy: Safe, Spam, Phishing, Malware Risk, Business Email Compromise, Quishing, Credential Theft, Payment Scam.
+- Model Evaluation Lab: metadata cho moi lan train, per-class metrics, macro/weighted F1, confusion matrix, threshold analysis va error analysis.
+- Campaign Threat Intelligence: gom nhom email nguy hiem thanh phishing/scam campaign, tao graph-ready nodes/edges va xuat report.
+- Adaptive Feedback Learning: nguoi dung da dang nhap co the gui feedback, he thong dua case kho vao review queue va xuat du lieu retraining da duyet.
+
+Tai lieu chi tiet nam trong:
+
+```text
+docs/ADAPTIVE_THREAT_INTELLIGENCE.md
+```
+
+Smoke check:
+
+```bash
+python scripts/smoke_adaptive_threat_intelligence.py
+```
 
 ## Ghi chu
 

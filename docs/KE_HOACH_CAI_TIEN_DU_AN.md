@@ -399,3 +399,28 @@ MailGuard AI phan tich email bang cach ket hop machine learning,
 phishing URL detection, QR threat analysis, explainable risk scoring,
 dashboard bao mat va feedback loop de cai thien model.
 ```
+
+## Huong nang cap moi: Adaptive Threat Intelligence Platform
+
+De bien de tai kho hon nua, roadmap moi nang cap he thong thanh:
+
+```text
+MailGuard AI: Adaptive Email Threat Intelligence Platform
+```
+
+Khac voi spam classifier thong thuong, he thong nay phan tich email nhu mot security event:
+
+- Trich xuat IoC: sender, domain, URL, QR payload, risky file, brand impersonation, keyword.
+- Phan loai threat taxonomy: Safe, Spam, Phishing, Malware Risk, Business Email Compromise, Quishing, Credential Theft, Payment Scam.
+- Model Lab: so sanh model, threshold tuning, calibration metadata, error analysis.
+- Campaign Intelligence: gom cac email lien quan thanh phishing/scam campaign.
+- Threat Graph: tao node/edge giua campaign, email, sender, URL, domain, brand.
+- Adaptive Learning: feedback nguoi dung, review queue, export du lieu retraining.
+
+Demo nang cao nen gom:
+
+1. Chay email safe va email phishing de thay threat label khac spam/ham.
+2. Xu ly batch co nhieu email cung domain phishing de hien campaign.
+3. Tai campaign report Markdown/JSON.
+4. Mo dashboard thay threat taxonomy, high-risk trend, review queue va model lab.
+5. Gui feedback sai nhan va xuat approved retraining data.
