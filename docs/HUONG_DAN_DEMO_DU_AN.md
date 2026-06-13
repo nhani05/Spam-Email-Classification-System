@@ -1,78 +1,78 @@
-# Huong dan demo du an MailGuard AI
+# Hướng Dẫn Demo Dự Án MailGuard AI
 
-Tai lieu nay dung de demo du an truoc giang vien/hoi dong. Muc tieu la trinh bay du an khong chi la spam/ham classifier, ma la mot he thong phan tich an toan email: risk score, threat taxonomy, URL phishing, QR/quishing, campaign detection, dashboard, feedback loop va model lab.
+Tài liệu này dùng để demo dự án trước giảng viên hoặc hội đồng. Mục tiêu là trình bày dự án không chỉ là một spam/ham classifier, mà là một hệ thống phân tích an toàn email: risk score, threat taxonomy, URL phishing, QR/quishing, campaign detection, dashboard, feedback loop và model lab.
 
-## 1. Thong diep chinh khi gioi thieu
+## 1. Thông Điệp Chính Khi Giới Thiệu
 
-Nen mo dau ngan gon:
+Nên mở đầu ngắn gọn:
 
 ```text
-Du an ban dau la Spam Email Classification System.
-Em da nang cap thanh MailGuard AI - Adaptive Email Threat Intelligence Platform.
+Dự án ban đầu là Spam Email Classification System.
+Em đã nâng cấp thành MailGuard AI - Adaptive Email Threat Intelligence Platform.
 
-He thong khong chi hoi "email nay la spam hay ham",
-ma tra loi:
-- Email co nguy hiem khong?
-- Nguy hiem theo loai nao: phishing, credential theft, quishing, malware risk?
-- Vi sao he thong danh gia nhu vay?
-- Nhung email nguy hiem co thuoc cung mot chien dich tan cong khong?
-- Nguoi dung co the feedback de cai thien model khong?
+Hệ thống không chỉ hỏi "email này là spam hay ham",
+mà trả lời:
+- Email có nguy hiểm không?
+- Nguy hiểm theo loại nào: phishing, credential theft, quishing, malware risk?
+- Vì sao hệ thống đánh giá như vậy?
+- Những email nguy hiểm có thuộc cùng một chiến dịch tấn công không?
+- Người dùng có thể feedback để cải thiện model không?
 ```
 
-## 2. Chuan bi truoc khi demo
+## 2. Chuẩn Bị Trước Khi Demo
 
-### 2.1 Kich hoat moi truong
+### 2.1 Kích Hoạt Môi Trường
 
 ```bash
 venv\Scripts\activate
 ```
 
-Neu chua cai thu vien:
+Nếu chưa cài thư viện:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2.2 Kiem tra model path
+### 2.2 Kiểm Tra Model Path
 
-Ung dung doc model trong `src/config/config.py`:
+Ứng dụng đọc model trong `src/config/config.py`:
 
 ```python
 model_path = "outputs/2026-06-08_09-08-52/models/SVM_model.pkl"
 feature_path = "outputs/2026-06-08_09-08-52/models/vectorizer.pkl"
 ```
 
-Neu thu muc `outputs/...` khong co, doi ve model co san:
+Nếu thư mục `outputs/...` không có, đổi về model có sẵn:
 
 ```python
 model_path = "data/models/v1/model.pkl"
 feature_path = "data/models/v1/feature.pkl"
 ```
 
-### 2.3 Kiem tra nhanh truoc gio demo
+### 2.3 Kiểm Tra Nhanh Trước Giờ Demo
 
-Chay:
+Chạy:
 
 ```bash
 python -m compileall src app.py scripts
 python scripts\smoke_adaptive_threat_intelligence.py
 ```
 
-Ket qua mong doi:
+Kết quả mong đợi:
 
 ```text
 adaptive threat intelligence smoke passed
 ```
 
-### 2.4 Cau hinh database neu muon demo dang nhap/dashboard/history
+### 2.4 Cấu Hình Database Nếu Muốn Demo Đăng Nhập/Dashboard/History
 
-Tao database:
+Tạo database:
 
 ```bash
 mysql -u root -p < db/db.sql
 ```
 
-Tao file `.env`:
+Tạo file `.env`:
 
 ```env
 DB_HOST=localhost
@@ -82,43 +82,43 @@ DB_PASSWORD=your_password
 DB_NAME=spam_detection
 ```
 
-Neu MySQL khong san sang, van demo duoc che do khach: single email, URL phishing va QR image. Cac phan can dang nhap nhu dashboard, MBOX, history, feedback se khong hoat dong day du.
+Nếu MySQL không sẵn sàng, vẫn demo được chế độ khách: single email, URL phishing và QR image. Các phần cần đăng nhập như dashboard, MBOX, history, feedback sẽ không hoạt động đầy đủ.
 
-### 2.5 Chay ung dung
+### 2.5 Chạy Ứng Dụng
 
 ```bash
 streamlit run app.py
 ```
 
-Mo:
+Mở:
 
 ```text
 http://localhost:8501
 ```
 
-## 3. Luong demo tong the
+## 3. Luồng Demo Tổng Thể
 
-Nen demo theo thu tu nay:
+Nên demo theo thứ tự:
 
 ```text
-1. Gioi thieu dashboard va muc tieu he thong
+1. Giới thiệu dashboard và mục tiêu hệ thống
 2. Demo safe email
 3. Demo spam/phishing email
 4. Demo URL phishing detection
 5. Demo QR/quishing detection
 6. Demo MBOX batch + campaign detection
-7. Demo history/dashboard sau khi co du lieu
+7. Demo history/dashboard sau khi có dữ liệu
 8. Demo feedback loop
-9. Demo model lab va tai lieu ky thuat
+9. Demo model lab và tài liệu kỹ thuật
 ```
 
-Neu thoi gian chi co 5-7 phut, bo qua training live va chi noi model lab qua docs/output.
+Nếu thời gian chỉ có 5-7 phút, bỏ qua training live và chỉ nói model lab qua docs/output.
 
-## 4. Demo 1 - Email binh thuong
+## 4. Demo 1 - Email Bình Thường
 
-### Input mau
+### Input Mẫu
 
-Dan vao tab `Email Don`:
+Dán vào tab `Email Đơn`:
 
 ```text
 Hi team,
@@ -129,25 +129,25 @@ I updated the dashboard screenshots and attached the latest notes.
 Thanks.
 ```
 
-### Ket qua mong doi
+### Kết Quả Mong Đợi
 
 - Prediction: `Ham`.
-- Risk score thap.
+- Risk score thấp.
 - Risk level: `Low`.
-- Threat label: `Safe` hoac risk thap.
-- Reasons noi khong co dau hieu phishing/link/malware manh.
+- Threat label: `Safe` hoặc risk thấp.
+- Reasons nói không có dấu hiệu phishing/link/malware mạnh.
 
-### Noi khi demo
+### Nội Dung Nên Nói Khi Demo
 
 ```text
-Voi email cong viec binh thuong, model phan loai la Ham.
-Risk aggregator ket hop ML va rule-based analyzer nen ket qua cuoi cung la Low risk.
-He thong khong chi hien Ham/Spam ma con hien risk score, threat label va ly do.
+Với email công việc bình thường, model phân loại là Ham.
+Risk aggregator kết hợp ML và rule-based analyzer nên kết quả cuối cùng là Low risk.
+Hệ thống không chỉ hiện Ham/Spam mà còn hiện risk score, threat label và lý do.
 ```
 
-## 5. Demo 2 - Email phishing/credential theft
+## 5. Demo 2 - Email Phishing/Credential Theft
 
-### Input mau
+### Input Mẫu
 
 ```text
 URGENT: Your PayPal account has been suspended.
@@ -158,30 +158,30 @@ http://paypa1-login.xyz/reset
 If you do not verify within 24 hours, your account will be permanently locked.
 ```
 
-### Ket qua mong doi
+### Kết Quả Mong Đợi
 
-- Prediction thuong la `Spam`.
+- Prediction thường là `Spam`.
 - Risk score cao.
-- Risk level: `High` hoac `Critical`.
-- Threat label co the la `Spam`, `Phishing` hoac `Credential Theft` tuy score.
-- URL analyzer hien domain `paypa1-login.xyz`.
-- Reasons co cac dau hieu:
+- Risk level: `High` hoặc `Critical`.
+- Threat label có thể là `Spam`, `Phishing` hoặc `Credential Theft` tùy score.
+- URL analyzer hiển thị domain `paypa1-login.xyz`.
+- Reasons có các dấu hiệu:
   - urgency/pressure language.
   - password/login/verify.
-  - URL khong dung HTTPS.
-  - domain/TLD dang nghi.
+  - URL không dùng HTTPS.
+  - domain/TLD đáng nghi.
 
-### Noi khi demo
+### Nội Dung Nên Nói Khi Demo
 
 ```text
-Email nay co nhieu dau hieu tan cong: yeu cau xac minh mat khau, tao ap luc thoi gian va chua link dang nghi.
-He thong dung ML de du doan spam, sau do dung rule-based threat analyzer de cham phishing, fake link, malware.
-Risk aggregator hop nhat cac tin hieu nay thanh final verdict va recommended actions.
+Email này có nhiều dấu hiệu tấn công: yêu cầu xác minh mật khẩu, tạo áp lực thời gian và chứa link đáng nghi.
+Hệ thống dùng ML để dự đoán spam, sau đó dùng rule-based threat analyzer để chấm phishing, fake link, malware.
+Risk aggregator hợp nhất các tín hiệu này thành final verdict và recommended actions.
 ```
 
 ## 6. Demo 3 - Phishing URL Detection
 
-Mo muc `Phishing URL Detection`, dan nhieu URL, moi dong mot URL:
+Mở mục `Phishing URL Detection`, dán nhiều URL, mỗi dòng một URL:
 
 ```text
 https://google.com
@@ -190,64 +190,64 @@ https://bit.ly/free-gift-login
 http://192.168.1.10/login
 ```
 
-### Ket qua mong doi
+### Kết Quả Mong Đợi
 
-- URL an toan co score thap.
-- URL gia mao/shortener/IP co score cao hon.
-- Moi URL co:
+- URL an toàn có score thấp.
+- URL giả mạo/shortener/IP có score cao hơn.
+- Mỗi URL có:
   - final destination.
   - domain.
   - extracted features.
   - reasons.
 
-### Noi khi demo
+### Nội Dung Nên Nói Khi Demo
 
 ```text
-Phan nay khong mo link that, chi phan tich cu phap va dac trung URL.
-He thong phat hien short link, raw IP, tu khoa login/verify, TLD rui ro va domain gia mao thuong hieu.
+Phần này không mở link thật, chỉ phân tích cú pháp và đặc trưng URL.
+Hệ thống phát hiện short link, raw IP, từ khóa login/verify, TLD rủi ro và domain giả mạo thương hiệu.
 ```
 
 ## 7. Demo 4 - QR / Quishing Detection
 
-Mo muc `Quishing Detection`, upload anh co QR code.
+Mở mục `Quishing Detection`, upload ảnh có QR code.
 
-### Mau QR nen chuan bi
+### Mẫu QR Nên Chuẩn Bị
 
-Chuan bi truoc 1 anh QR chua link:
+Chuẩn bị trước 1 ảnh QR chứa link:
 
 ```text
 http://paypa1-login.xyz/verify
 ```
 
-Hoac QR thanh toan neu muon demo payment QR review.
+Hoặc QR thanh toán nếu muốn demo payment QR review.
 
-### Ket qua mong doi
+### Kết Quả Mong Đợi
 
-- He thong doc QR payload.
-- Neu QR chua URL dang nghi, hien URL analysis.
-- Neu QR la payment payload, verdict co the la `PAYMENT_QR_REVIEW`.
+- Hệ thống đọc QR payload.
+- Nếu QR chứa URL đáng nghi, hiển thị URL analysis.
+- Nếu QR là payment payload, verdict có thể là `PAYMENT_QR_REVIEW`.
 
-### Noi khi demo
+### Nội Dung Nên Nói Khi Demo
 
 ```text
-Quishing la phishing qua QR code.
-Nguoi dung thuong khong thay URL that truoc khi quet, nen he thong giai ma QR va cham diem rui ro truoc khi nguoi dung mo link.
+Quishing là phishing qua QR code.
+Người dùng thường không thấy URL thật trước khi quét, nên hệ thống giải mã QR và chấm điểm rủi ro trước khi người dùng mở link.
 ```
 
-## 8. Demo 5 - MBOX batch va campaign detection
+## 8. Demo 5 - MBOX Batch Và Campaign Detection
 
-Phan nay can dang nhap va database hoat dong.
+Phần này cần đăng nhập và database hoạt động.
 
-### Cach demo
+### Cách Demo
 
-1. Dang nhap bang tai khoan co san hoac dang ky tai khoan moi.
-2. Mo tab `File MBOX`.
+1. Đăng nhập bằng tài khoản có sẵn hoặc đăng ký tài khoản mới.
+2. Mở tab `File MBOX`.
 3. Upload file MBOX.
-4. Bam xu ly.
+4. Bấm xử lý.
 
-### Ket qua mong doi
+### Kết Quả Mong Đợi
 
-Bang ket qua co cac cot:
+Bảng kết quả có các cột:
 
 - `Prediction`
 - `Threat Label`
@@ -256,7 +256,7 @@ Bang ket qua co cac cot:
 - `Verdict`
 - `Campaign ID`
 
-Neu co nhieu email nguy hiem lien quan, he thong hien `Threat Campaigns`:
+Nếu có nhiều email nguy hiểm liên quan, hệ thống hiển thị `Threat Campaigns`:
 
 - `campaign_id`
 - `primary_threat_label`
@@ -265,24 +265,24 @@ Neu co nhieu email nguy hiem lien quan, he thong hien `Threat Campaigns`:
 - `email_count`
 - `top_domains`
 
-Co nut tai:
+Có nút tải:
 
 - Campaign summaries JSON.
 - First campaign report Markdown.
 
-### Noi khi demo
+### Nội Dung Nên Nói Khi Demo
 
 ```text
-Day la diem nang cap lon nhat cua du an.
-He thong khong chi phan loai tung email rieng le, ma con gom cac email co chung domain, URL, subject/body, brand hoac thoi gian thanh mot phishing campaign.
-No giong mot mini SOC investigation platform.
+Đây là điểm nâng cấp lớn nhất của dự án.
+Hệ thống không chỉ phân loại từng email riêng lẻ, mà còn gom các email có chung domain, URL, subject/body, brand hoặc thời gian thành một phishing campaign.
+Nó giống một mini SOC investigation platform.
 ```
 
-## 9. Demo 6 - Dashboard bao mat
+## 9. Demo 6 - Dashboard Bảo Mật
 
-Sau khi da phan tich mot so email, mo tab `Dashboard`.
+Sau khi đã phân tích một số email, mở tab `Dashboard`.
 
-### Noi dung can chi ra
+### Nội Dung Cần Chỉ Ra
 
 - Total emails.
 - Spam/Ham ratio.
@@ -290,49 +290,49 @@ Sau khi da phan tich mot so email, mo tab `Dashboard`.
 - Campaign count.
 - Threat taxonomy distribution.
 - High-risk trend.
-- Adaptive learning review queue neu co.
-- Model lab runs neu da train model moi.
+- Adaptive learning review queue nếu có.
+- Model lab runs nếu đã train model mới.
 
-### Noi khi demo
+### Nội Dung Nên Nói Khi Demo
 
 ```text
-Dashboard khong chi thong ke spam/ham.
-No duoc nang cap thanh security dashboard: risk trend, threat taxonomy, campaign count va review queue.
+Dashboard không chỉ thống kê spam/ham.
+Nó được nâng cấp thành security dashboard: risk trend, threat taxonomy, campaign count và review queue.
 ```
 
-## 10. Demo 7 - Feedback loop va active learning
+## 10. Demo 7 - Feedback Loop Và Active Learning
 
-Phan nay can dang nhap.
+Phần này cần đăng nhập.
 
-### Cach demo
+### Cách Demo
 
-1. Phan tich mot email.
-2. Sau khi ket qua duoc luu, mo `Prediction feedback`.
-3. Chon:
-   - `correct` neu ket qua dung.
-   - `incorrect` neu ket qua sai.
-4. Neu sai, chon corrected threat label, vi du `Phishing`.
-5. Nhap analyst note.
-6. Bam `Save feedback`.
+1. Phân tích một email.
+2. Sau khi kết quả được lưu, mở `Prediction feedback`.
+3. Chọn:
+   - `correct` nếu kết quả đúng.
+   - `incorrect` nếu kết quả sai.
+4. Nếu sai, chọn corrected threat label, ví dụ `Phishing`.
+5. Nhập analyst note.
+6. Bấm `Save feedback`.
 
-### Ket qua mong doi
+### Kết Quả Mong Đợi
 
-- Feedback duoc luu neu DB migration da chay.
-- Case sai duoc dua vao review queue.
-- Dashboard co the hien review queue.
+- Feedback được lưu nếu DB migration đã chạy.
+- Case sai được đưa vào review queue.
+- Dashboard có thể hiển thị review queue.
 
-### Noi khi demo
+### Nội Dung Nên Nói Khi Demo
 
 ```text
-He thong khong retrain truc tiep tu feedback vi co nguy co feedback sai hoac doc.
-Thay vao do, feedback di vao review queue. Chi nhung item duoc duyet moi duoc export thanh retraining data.
+Hệ thống không retrain trực tiếp từ feedback vì có nguy cơ feedback sai hoặc độc.
+Thay vào đó, feedback đi vào review queue. Chỉ những item được duyệt mới được export thành retraining data.
 ```
 
 ## 11. Demo 8 - Model Evaluation Lab
 
-Khong nen train live neu thoi gian demo ngan, vi GridSearchCV co the lau.
+Không nên train live nếu thời gian demo ngắn, vì GridSearchCV có thể lâu.
 
-### Noi ve pipeline
+### Nói Về Pipeline
 
 Training pipeline:
 
@@ -340,7 +340,7 @@ Training pipeline:
 python -m src.pipeline.training_pipeline
 ```
 
-Sau khi train, he thong sinh:
+Sau khi train, hệ thống sinh:
 
 ```text
 outputs/<timestamp>/models/
@@ -351,112 +351,112 @@ outputs/<timestamp>/observations/error_analysis.json
 outputs/<timestamp>/observations/model_lab_metadata.json
 ```
 
-### Diem can nhan manh
+### Điểm Cần Nhấn Mạnh
 
 ```text
-Model lab khong chi bao accuracy.
-No bao per-class precision/recall/F1, macro F1, weighted F1, confusion matrix, threshold analysis va error analysis.
-Dieu nay phu hop hon voi bai toan spam/phishing vi du lieu bi lech lop.
+Model lab không chỉ báo accuracy.
+Nó báo per-class precision/recall/F1, macro F1, weighted F1, confusion matrix, threshold analysis và error analysis.
+Điều này phù hợp hơn với bài toán spam/phishing vì dữ liệu bị lệch lớp.
 ```
 
-## 12. Cac cau hoi hoi dong co the hoi
+## 12. Các Câu Hỏi Hội Đồng Có Thể Hỏi
 
-### Cau hoi: Du an khac gi spam classifier co ban?
+### Câu Hỏi: Dự án khác gì spam classifier cơ bản?
 
-Tra loi:
+Trả lời:
 
 ```text
-Spam classifier co ban chi tra ve Spam/Ham.
-Du an nay co them risk score, threat taxonomy, URL/QR analysis, campaign detection, graph-ready investigation, feedback loop va model lab.
-No phan tich email nhu mot security event.
+Spam classifier cơ bản chỉ trả về Spam/Ham.
+Dự án này có thêm risk score, threat taxonomy, URL/QR analysis, campaign detection, graph-ready investigation, feedback loop và model lab.
+Nó phân tích email như một security event.
 ```
 
-### Cau hoi: Vi sao khong dung Transformer?
+### Câu Hỏi: Vì sao không dùng Transformer?
 
-Tra loi:
+Trả lời:
 
 ```text
-Transformer co the la huong mo rong, nhung voi do an nay em uu tien hybrid sklearn pipeline vi nhe, giai thich duoc, chay local tot va phu hop demo.
-He thong da thiet ke model lab nen sau nay co the them Transformer nhu mot benchmark moi.
+Transformer có thể là hướng mở rộng, nhưng với đồ án này em ưu tiên hybrid sklearn pipeline vì nhẹ, giải thích được, chạy local tốt và phù hợp demo.
+Hệ thống đã thiết kế model lab nên sau này có thể thêm Transformer như một benchmark mới.
 ```
 
-### Cau hoi: Neu model bao Ham nhung URL nguy hiem thi sao?
+### Câu Hỏi: Nếu model báo Ham nhưng URL nguy hiểm thì sao?
 
-Tra loi:
+Trả lời:
 
 ```text
-Risk aggregator xu ly truong hop model-rule conflict.
-Neu ML bao Ham nhung URL/QR/malware signal cao, risk score van duoc day len va case co the vao review queue.
+Risk aggregator xử lý trường hợp model-rule conflict.
+Nếu ML báo Ham nhưng URL/QR/malware signal cao, risk score vẫn được đẩy lên và case có thể vào review queue.
 ```
 
-### Cau hoi: Campaign detection dua vao gi?
+### Câu Hỏi: Campaign detection dựa vào gì?
 
-Tra loi:
+Trả lời:
 
 ```text
-He thong tinh similarity dua tren text similarity, domain overlap, URL overlap, sender-domain, brand, QR payload, threat label va time window.
-Neu nhieu email co score vuot threshold, chung duoc gom vao mot campaign.
+Hệ thống tính similarity dựa trên text similarity, domain overlap, URL overlap, sender-domain, brand, QR payload, threat label và time window.
+Nếu nhiều email có score vượt threshold, chúng được gom vào một campaign.
 ```
 
-### Cau hoi: Feedback co lam model hoc sai khong?
+### Câu Hỏi: Feedback có làm model học sai không?
 
-Tra loi:
+Trả lời:
 
 ```text
-Khong retrain truc tiep tu feedback.
-Feedback vao review queue. Chi item duoc approve moi duoc export thanh retraining data.
-Day la cach giam nguy co poisoning.
+Không retrain trực tiếp từ feedback.
+Feedback vào review queue. Chỉ item được approve mới được export thành retraining data.
+Đây là cách giảm nguy cơ poisoning.
 ```
 
-## 13. Loi thuong gap khi demo
+## 13. Lỗi Thường Gặp Khi Demo
 
-### Loi khong load duoc model
+### Lỗi Không Load Được Model
 
-Kiem tra `src/config/config.py`. Neu path trong `outputs/...` khong ton tai, doi ve:
+Kiểm tra `src/config/config.py`. Nếu path trong `outputs/...` không tồn tại, đổi về:
 
 ```python
 model_path = "data/models/v1/model.pkl"
 feature_path = "data/models/v1/feature.pkl"
 ```
 
-### Loi khong dang nhap duoc
+### Lỗi Không Đăng Nhập Được
 
-Kiem tra:
+Kiểm tra:
 
-- MySQL dang chay.
-- `.env` dung user/password/database.
-- Da chay `mysql -u root -p < db/db.sql`.
+- MySQL đang chạy.
+- `.env` đúng user/password/database.
+- Đã chạy `mysql -u root -p < db/db.sql`.
 
-### QR khong doc duoc
+### QR Không Đọc Được
 
-Thu:
+Thử:
 
-- Anh ro net hon.
-- QR lon hon.
-- Dinh dang `png` hoac `jpg`.
-- QR khong bi nghieng/cat goc.
+- Ảnh rõ nét hơn.
+- QR lớn hơn.
+- Định dạng `png` hoặc `jpg`.
+- QR không bị nghiêng/cắt góc.
 
-### MBOX khong co campaign
+### MBOX Không Có Campaign
 
-Khong phai loi. Neu file chi co email rieng le, he thong se khong ep tao campaign. Muon demo campaign, can file co nhieu email cung domain/link/subject phishing.
+Không phải lỗi. Nếu file chỉ có email riêng lẻ, hệ thống sẽ không ép tạo campaign. Muốn demo campaign, cần file có nhiều email cùng domain/link/subject phishing.
 
-## 14. Checklist ngay truoc khi bao ve
+## 14. Checklist Ngay Trước Khi Bảo Vệ
 
-- [ ] Chay `python -m compileall src app.py scripts`.
-- [ ] Chay `python scripts\smoke_adaptive_threat_intelligence.py`.
-- [ ] Kiem tra model path trong `src/config/config.py`.
-- [ ] Chay Streamlit va mo `http://localhost:8501`.
-- [ ] Chuan bi san input safe email.
-- [ ] Chuan bi san input phishing email.
-- [ ] Chuan bi san danh sach URL demo.
-- [ ] Chuan bi san anh QR neu demo quishing.
-- [ ] Chuan bi san file MBOX neu demo campaign.
-- [ ] Dang nhap thu truoc neu demo dashboard/history/feedback.
+- [ ] Chạy `python -m compileall src app.py scripts`.
+- [ ] Chạy `python scripts\smoke_adaptive_threat_intelligence.py`.
+- [ ] Kiểm tra model path trong `src/config/config.py`.
+- [ ] Chạy Streamlit và mở `http://localhost:8501`.
+- [ ] Chuẩn bị sẵn input safe email.
+- [ ] Chuẩn bị sẵn input phishing email.
+- [ ] Chuẩn bị sẵn danh sách URL demo.
+- [ ] Chuẩn bị sẵn ảnh QR nếu demo quishing.
+- [ ] Chuẩn bị sẵn file MBOX nếu demo campaign.
+- [ ] Đăng nhập thử trước nếu demo dashboard/history/feedback.
 
-## 15. Ket luan nen noi
+## 15. Kết Luận Nên Nói
 
 ```text
-Ket qua cuoi cung la MailGuard AI - mot he thong phan tich an toan email tong hop.
-Du an van co nen tang ML spam classification, nhung duoc nang cap them risk scoring, explainability, URL/QR phishing detection, campaign intelligence, dashboard va adaptive feedback learning.
-Huong phat trien tiep theo la bo sung du lieu phishing that, them header authentication SPF/DKIM/DMARC va benchmark Transformer trong Model Lab.
+Kết quả cuối cùng là MailGuard AI - một hệ thống phân tích an toàn email tổng hợp.
+Dự án vẫn có nền tảng ML spam classification, nhưng được nâng cấp thêm risk scoring, explainability, URL/QR phishing detection, campaign intelligence, dashboard và adaptive feedback learning.
+Hướng phát triển tiếp theo là bổ sung dữ liệu phishing thật, thêm header authentication SPF/DKIM/DMARC và benchmark Transformer trong Model Lab.
 ```

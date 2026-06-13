@@ -1,20 +1,21 @@
 # Spam Email Classification System
 
-He thong phan loai email spam/ham bang Machine Learning, co giao dien Streamlit de kiem tra email don, xu ly file MBOX, phan tich rui ro URL/QR va luu lich su du doan theo tai khoan nguoi dung.
+Hệ thống phân loại email spam/ham bằng Machine Learning, có giao diện Streamlit để kiểm tra email đơn, xử lý file MBOX, phân tích rủi ro URL/QR, lưu lịch sử theo tài khoản người dùng và hỗ trợ các tính năng nâng cấp theo hướng MailGuard AI.
 
-## Tinh nang chinh
+## Tính Năng Chính
 
-- Phan loai noi dung email thanh `Spam` hoac `Ham`.
-- Hien thi do tin cay cua du doan neu model ho tro `predict_proba`.
-- Phan tich dau hieu de doa trong email: phishing, fake link, malware, file dang nghi va URL dang nghi.
-- Phan tich truc tiep mot hoac nhieu URL, cham diem rui ro `0-100`, hien domain dich, ly do va dac trung URL.
-- Phan tich anh co QR code/quishing, giai ma QR payload va cham diem rui ro URL ma khong mo lien ket.
-- Xu ly hang loat email tu file MBOX va xuat ket qua CSV.
-- Dang ky, dang nhap va luu lich su du doan bang MySQL.
-- Dashboard va lich su cho nguoi dung da dang nhap.
-- Pipeline huan luyen lai model tu dataset CSV.
+- Phân loại nội dung email thành `Spam` hoặc `Ham`.
+- Hiển thị độ tin cậy của dự đoán nếu mô hình hỗ trợ `predict_proba`.
+- Phân tích dấu hiệu đe dọa trong email: phishing, fake link, malware, file đáng nghi và URL đáng nghi.
+- Phân tích trực tiếp một hoặc nhiều URL, chấm điểm rủi ro `0-100`, hiển thị domain đích, lý do và đặc trưng URL.
+- Phân tích ảnh có QR code/quishing, giải mã QR payload và chấm điểm rủi ro URL mà không mở liên kết.
+- Xử lý hàng loạt email từ file MBOX và xuất kết quả CSV.
+- Đăng ký, đăng nhập và lưu lịch sử dự đoán bằng MySQL.
+- Dashboard và lịch sử cho người dùng đã đăng nhập.
+- Pipeline huấn luyện lại mô hình từ dataset CSV.
+- Hỗ trợ hướng nâng cấp Adaptive Threat Intelligence: threat taxonomy, campaign detection, feedback loop và model lab.
 
-## Cong nghe su dung
+## Công Nghệ Sử Dụng
 
 - Python
 - Streamlit
@@ -23,67 +24,69 @@ He thong phan loai email spam/ham bang Machine Learning, co giao dien Streamlit 
 - OpenCV
 - BeautifulSoup
 - MySQL Connector
-- TF-IDF vectorizer va cac mo hinh ML nhu Logistic Regression, Decision Tree, SVM, KNN, Random Forest
+- TF-IDF vectorizer và các mô hình ML như Logistic Regression, Decision Tree, SVM, KNN, Random Forest
 
-## Cau truc thu muc
+## Cấu Trúc Thư Mục
 
 ```text
 .
-|-- app.py                         # Ung dung Streamlit
-|-- requirements.txt               # Danh sach package Python
-|-- pyproject.toml                  # Cau hinh du an khi dung uv
+|-- app.py                         # Ứng dụng Streamlit
+|-- requirements.txt               # Danh sách package Python
+|-- pyproject.toml                 # Cấu hình dự án khi dùng uv
 |-- data/
-|   |-- dataset/dataset.csv         # Du lieu huan luyen
-|   `-- models/v1/                  # Model/vectorizer co san
+|   |-- dataset/dataset.csv        # Dữ liệu huấn luyện
+|   `-- models/v1/                 # Model/vectorizer có sẵn
 |-- db/
-|   `-- db.sql                      # Script tao database MySQL
+|   `-- db.sql                     # Script tạo database MySQL
+|-- docs/                          # Tài liệu dự án, demo, roadmap
+|-- scripts/                       # Smoke checks và tiện ích demo
 |-- src/
-|   |-- auth/                       # Dang nhap, dang ky, luu lich su
-|   |-- components/                 # Ingestion, transformation, training, dashboard
-|   |-- config/                     # Cau hinh duong dan du lieu/model
-|   |-- database/                   # Ket noi MySQL
-|   |-- pipeline/                   # Training va prediction pipeline
-|   |-- security/                   # Phan tich URL, QR, email threat
-|   `-- utils/                      # Logger, email utils, state, DB helpers
-`-- Notebook Experiments/           # Notebook thu nghiem
+|   |-- auth/                      # Đăng nhập, đăng ký, lưu và đọc lịch sử
+|   |-- components/                # Ingestion, transformation, training, dashboard
+|   |-- config/                    # Cấu hình đường dẫn dữ liệu/model
+|   |-- database/                  # Kết nối MySQL
+|   |-- pipeline/                  # Training và prediction pipeline
+|   |-- security/                  # Phân tích URL, QR, email threat, campaign
+|   `-- utils/                     # Logger, email utils, state, DB helpers
+`-- Notebook Experiments/          # Notebook thử nghiệm
 ```
 
-## Yeu cau moi truong
+## Yêu Cầu Môi Trường
 
-- Python 3.13 tro len theo `pyproject.toml`.
-- MySQL neu muon dung chuc nang dang nhap, lich su va dashboard.
-- Co san file model va vectorizer dung voi duong dan trong `src/config/config.py`.
+- Python 3.13 trở lên theo `pyproject.toml`.
+- MySQL nếu muốn dùng đăng nhập, lịch sử, dashboard, feedback và các bảng adaptive learning.
+- Có sẵn file model và vectorizer đúng với đường dẫn trong `src/config/config.py`.
 
-## Cai dat
+## Cài Đặt
 
-Tao va kich hoat moi truong ao:
+Tạo và kích hoạt môi trường ảo:
 
 ```bash
 python -m venv venv
 venv\Scripts\activate
 ```
 
-Cai dependencies:
+Cài dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Neu dung `uv`:
+Nếu dùng `uv`:
 
 ```bash
 uv sync
 ```
 
-## Cau hinh database
+## Cấu Hình Database
 
-Tao database MySQL bang file script:
+Tạo database MySQL bằng file script:
 
 ```bash
 mysql -u root -p < db/db.sql
 ```
 
-Tao file `.env` o thu muc goc du an:
+Tạo file `.env` ở thư mục gốc dự án:
 
 ```env
 DB_HOST=localhost
@@ -93,114 +96,110 @@ DB_PASSWORD=your_password
 DB_NAME=spam_detection
 ```
 
-Neu MySQL chua san sang, ung dung van co the chay che do khach de kiem tra email don, nhung cac chuc nang dang nhap, lich su va dashboard se khong hoat dong.
+Nếu MySQL chưa sẵn sàng, ứng dụng vẫn có thể chạy chế độ khách để kiểm tra email đơn, phân tích URL và phân tích QR. Các chức năng đăng nhập, lịch sử, dashboard, feedback và review queue sẽ không hoạt động đầy đủ.
 
-## Cau hinh model
+## Cấu Hình Model
 
-Ung dung load model tu `src/config/config.py`:
+Ứng dụng load model từ `src/config/config.py`:
 
 ```python
-model_path = "outputs/2026-03-21_15-14-51/models/SVM_model.pkl"
-feature_path = "outputs/2026-03-21_15-14-51/models/vectorizer.pkl"
+model_path = "outputs/2026-06-08_09-08-52/models/SVM_model.pkl"
+feature_path = "outputs/2026-06-08_09-08-52/models/vectorizer.pkl"
 ```
 
-Neu thu muc `outputs/...` khong ton tai, cap nhat thanh model co san trong repo:
+Nếu thư mục `outputs/...` không tồn tại, cập nhật về model có sẵn trong repo:
 
 ```python
 model_path = "data/models/v1/model.pkl"
 feature_path = "data/models/v1/feature.pkl"
 ```
 
-Hoac chay lai pipeline huan luyen de sinh model moi trong thu muc `outputs/`.
+Hoặc chạy lại pipeline huấn luyện để sinh model mới trong thư mục `outputs/`.
 
-## Chay ung dung
+## Chạy Ứng Dụng
 
 ```bash
 streamlit run app.py
 ```
 
-Sau khi chay, mo duong dan Streamlit hien tren terminal, thuong la:
+Sau khi chạy, mở đường dẫn Streamlit hiển thị trên terminal, thường là:
 
 ```text
 http://localhost:8501
 ```
 
-## Huan luyen lai model
+## Huấn Luyện Lại Model
 
-Dataset mac dinh nam tai:
+Dataset mặc định nằm tại:
 
 ```text
 data/dataset/dataset.csv
 ```
 
-Chay pipeline huan luyen:
+Chạy pipeline huấn luyện:
 
 ```bash
 python -m src.pipeline.training_pipeline
 ```
 
-Pipeline se:
+Pipeline sẽ:
 
-1. Doc du lieu tu CSV.
-2. Ma hoa nhan `spam` thanh `0`, `ham` thanh `1`.
-3. Chia train/test theo ti le 70/30.
-4. Vector hoa noi dung email bang TF-IDF.
-5. Huan luyen va tim tham so tot nhat cho nhieu mo hinh.
-6. Luu model, vectorizer va bao cao metric vao `outputs/<timestamp>/`.
+1. Đọc dữ liệu từ CSV.
+2. Mã hóa nhãn `spam` thành `0`, `ham` thành `1`.
+3. Chia train/test theo tỉ lệ 70/30.
+4. Vector hóa nội dung email bằng hybrid feature pipeline: word TF-IDF, character n-gram TF-IDF và numeric security features.
+5. Huấn luyện và tìm tham số tốt nhất cho nhiều mô hình.
+6. Lưu model, vectorizer, metadata và báo cáo metric vào `outputs/<timestamp>/`.
 
-Sau khi huan luyen, cap nhat `model_path` va `feature_path` trong `src/config/config.py` de tro toi model moi.
+Sau khi huấn luyện, cập nhật `model_path` và `feature_path` trong `src/config/config.py` để trỏ tới model mới.
 
-## Su dung ung dung
+## Sử Dụng Ứng Dụng
 
-- Khach: kiem tra email don, phan tich URL truc tiep va phan tich QR image/quishing.
-- Nguoi dung da dang nhap: co them dashboard, xu ly file MBOX va xem lich su.
-- File MBOX ho tro upload qua tab `File MBOX`.
-- Ket qua batch co the tai xuong duoi dang CSV.
-- Muc `Phishing URL Detection` chap nhan nhieu URL, moi dong mot URL. He thong danh dau cac dau hieu nhu short link, redirect long nhau, ky tu encode, URL qua dai, domain nhieu so/gach noi, TLD rui ro cao va gia mao thuong hieu.
-- Muc `Quishing Detection` nhan anh `png`, `jpg`, `jpeg`, `webp`, `bmp`, giai ma QR payload va dung chung bo cham diem URL; voi QR thanh toan khong phai URL, he thong yeu cau kiem tra nguoi nhan, ngan hang va so tai khoan truoc khi chuyen tien.
-
-## Tai lieu du an
-
-- `docs/PHAN_CONG_TINH_NANG.md`: Phan cong cac tinh nang hien co cho 2 thanh vien.
-- `docs/KE_HOACH_CAI_TIEN_DU_AN.md`: Roadmap nang cap du an thanh MailGuard AI - Email Threat Detection System.
-- `docs/HUONG_DAN_DEMO_DU_AN.md`: Kich ban demo chi tiet, input mau, ket qua mong doi va cach tra loi cau hoi.
-
-## Huong phat trien
-
-Du an co the duoc nang cap tu Spam Email Classification thanh he thong phan tich an toan email tong hop:
-
-- Cham diem rui ro tong hop `0-100`.
-- Giai thich ly do email bi danh dau nguy hiem.
-- Phat hien phishing URL va QR phishing.
-- Dashboard bao mat theo risk level, risky domain va lich su high risk.
-- Feedback loop de nguoi dung bao ket qua dung/sai.
-- Admin mode de quan ly blacklist/whitelist domain.
+- Khách: kiểm tra email đơn, phân tích URL trực tiếp và phân tích QR image/quishing.
+- Người dùng đã đăng nhập: có thêm dashboard, xử lý file MBOX, xem lịch sử và gửi feedback.
+- File MBOX hỗ trợ upload qua tab `File MBOX`.
+- Kết quả batch có thể tải xuống dưới dạng CSV.
+- Mục `Phishing URL Detection` chấp nhận nhiều URL, mỗi dòng một URL. Hệ thống đánh dấu các dấu hiệu như short link, redirect lồng nhau, ký tự encode, URL quá dài, domain nhiều số/gạch nối, TLD rủi ro cao và giả mạo thương hiệu.
+- Mục `Quishing Detection` nhận ảnh `png`, `jpg`, `jpeg`, `webp`, `bmp`, giải mã QR payload và dùng chung bộ chấm điểm URL.
 
 ## Adaptive Threat Intelligence Platform
 
-Du an da co huong nang cap moi: `MailGuard AI: Adaptive Email Threat Intelligence Platform`.
-Huong nay bien moi email thanh mot security event co cau truc, gom:
-
-- Hybrid threat modeling: ket hop TF-IDF word/char n-gram, numeric security features, URL, QR, attachment va rule score.
-- Threat taxonomy: Safe, Spam, Phishing, Malware Risk, Business Email Compromise, Quishing, Credential Theft, Payment Scam.
-- Model Evaluation Lab: metadata cho moi lan train, per-class metrics, macro/weighted F1, confusion matrix, threshold analysis va error analysis.
-- Campaign Threat Intelligence: gom nhom email nguy hiem thanh phishing/scam campaign, tao graph-ready nodes/edges va xuat report.
-- Adaptive Feedback Learning: nguoi dung da dang nhap co the gui feedback, he thong dua case kho vao review queue va xuat du lieu retraining da duyet.
-
-Tai lieu chi tiet nam trong:
+Dự án đã được nâng cấp theo hướng:
 
 ```text
-docs/ADAPTIVE_THREAT_INTELLIGENCE.md
+MailGuard AI: Adaptive Email Threat Intelligence Platform
 ```
 
-Smoke check:
+Hướng này biến mỗi email thành một security event có cấu trúc:
+
+- Hybrid threat modeling: kết hợp TF-IDF word/char n-gram, numeric security features, URL, QR, attachment và rule score.
+- Threat taxonomy: Safe, Spam, Phishing, Malware Risk, Business Email Compromise, Quishing, Credential Theft, Payment Scam.
+- Model Evaluation Lab: metadata cho mỗi lần train, per-class metrics, macro/weighted F1, confusion matrix, threshold analysis và error analysis.
+- Campaign Threat Intelligence: gom nhóm email nguy hiểm thành phishing/scam campaign, tạo graph-ready nodes/edges và xuất report.
+- Adaptive Feedback Learning: người dùng đã đăng nhập có thể gửi feedback, hệ thống đưa case khó vào review queue và xuất dữ liệu retraining đã duyệt.
+
+## Kiểm Tra Nhanh
 
 ```bash
-python scripts/smoke_adaptive_threat_intelligence.py
+python -m compileall src app.py scripts
+python scripts\smoke_adaptive_threat_intelligence.py
 ```
 
-## Ghi chu
+Kết quả mong đợi:
 
-- File `.env`, `outputs/`, `venv/`, log va file MBOX duoc bo qua trong `.gitignore`.
-- Mat khau hien dang duoc luu theo logic hien co cua du an; khi trien khai thuc te nen bo sung hashing va rang buoc bao mat tot hon.
-- Neu loi load model xay ra khi mo app, hay kiem tra lai duong dan `model_path` va `feature_path`.
+```text
+adaptive threat intelligence smoke passed
+```
+
+## Tài Liệu Dự Án
+
+- `docs/HUONG_DAN_DEMO_DU_AN.md`: Kịch bản demo chi tiết, input mẫu, kết quả mong đợi và cách trả lời câu hỏi.
+- `docs/ADAPTIVE_THREAT_INTELLIGENCE.md`: Tài liệu kiến trúc Adaptive Threat Intelligence Platform.
+- `docs/KE_HOACH_CAI_TIEN_DU_AN.md`: Roadmap nâng cấp dự án thành MailGuard AI.
+- `docs/PHAN_CONG_TINH_NANG.md`: Phân công tính năng cho hai thành viên.
+
+## Ghi Chú
+
+- File `.env`, `outputs/`, `venv/`, log và file MBOX được bỏ qua trong `.gitignore`.
+- Mật khẩu được hash trong logic ứng dụng nếu có `bcrypt`; nếu thiếu `bcrypt`, hệ thống fallback SHA-256 chỉ phù hợp cho môi trường phát triển.
+- Nếu lỗi load model xảy ra khi mở app, hãy kiểm tra lại `model_path` và `feature_path`.
