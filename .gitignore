@@ -18,6 +18,10 @@ outputs/
 *.log
 *.mbox
 
+# Local training data and model artifacts
+data/dataset/*.csv
+data/models/
+
 # Frontend / Node.js
 frontend/node_modules/
 frontend/dist/
