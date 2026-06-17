@@ -1,3 +1,4 @@
+import os
 import re
 from dataclasses import dataclass, field
 from html import unescape
@@ -6,6 +7,13 @@ from typing import Dict, List
 from bs4 import BeautifulSoup
 
 from .url_risk_model import URLRiskModel
+
+try:
+    import torch
+    from transformers import pipeline
+except ImportError:
+    torch = None
+    pipeline = None
 
 
 URL_PATTERN = re.compile(
@@ -108,6 +116,20 @@ class EmailThreatAnalyzer:
 
     def __init__(self) -> None:
         self.url_model = URLRiskModel()
+        self.ai_phishing_detector = None
+        
+        if pipeline is not None and torch is not None:
+            try:
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                model_path = "outputs/phishing_detector_vi"
+                # Nếu chưa tự train, sẽ lấy mô hình trực tiếp từ Hugging Face
+                if not os.path.exists(model_path):
+                    model_path = "nxtcute/xlm-r-phishing-and-social-engineering-detector-vi"
+                self.ai_phishing_detector = pipeline(
+                    "text-classification", model=model_path, tokenizer=model_path, device=device
+                )
+            except Exception as e:
+                print(f"Warning: Không thể tải AI Phishing Model: {e}")
 
     def analyze(self, email_text: str) -> EmailThreatResult:
         normalized_text = self._normalize_text(email_text)
@@ -182,30 +204,48 @@ class EmailThreatAnalyzer:
         return self._dedupe(risky)
 
     def _score_phishing_text(self, text: str) -> tuple[int, List[str]]:
-        score = 0
         reasons = []
 
+        # 1. Phân tích bằng AI Model (Mới)
+        ai_score = 0
+        if self.ai_phishing_detector is not None and text.strip():
+            try:
+                # XLM-R giới hạn 512 token, cắt bớt text đầu/cuối để tránh lỗi
+                result = self.ai_phishing_detector(text[:2000], truncation=True, max_length=512)[0]
+                label = result['label'].upper()
+                ai_conf = result['score']
+                
+                if label == 'LABEL_1' or 'PHISH' in label or 'SCAM' in label or 'SOCIAL' in label:
+                    ai_score = int(ai_conf * 100)
+                    reasons.append(f"AI Model detected phishing/social engineering with {ai_score}% confidence.")
+            except Exception:
+                pass
+
+        # 2. Phân tích bằng Luật (Rule-based) như cũ
         urgent_hits = self._pattern_hits(text, URGENT_PATTERNS)
         credential_hits = self._pattern_hits(text, CREDENTIAL_PATTERNS)
         money_hits = self._pattern_hits(text, MONEY_PATTERNS)
 
+        rule_score = 0
         if urgent_hits:
-            score += min(35, 8 * len(urgent_hits))
+            rule_score += min(35, 8 * len(urgent_hits))
             reasons.append("Email uses urgent or pressure language commonly seen in phishing.")
         if credential_hits:
-            score += min(35, 10 * len(credential_hits))
+            rule_score += min(35, 10 * len(credential_hits))
             reasons.append("Email asks for or references credentials such as password, OTP, or login.")
         if money_hits:
-            score += min(25, 7 * len(money_hits))
+            rule_score += min(25, 7 * len(money_hits))
             reasons.append("Email contains payment, invoice, refund, or bank-transfer language.")
         if urgent_hits and credential_hits:
-            score += 15
+            rule_score += 15
             reasons.append("Urgency is combined with credential-related wording.")
         if urgent_hits and money_hits:
-            score += 10
+            rule_score += 10
             reasons.append("Urgency is combined with payment-related wording.")
 
-        return min(score, 100), reasons
+        # Hợp nhất: Lấy điểm cao nhất giữa AI dự đoán và Luật
+        final_score = max(rule_score, ai_score)
+        return min(final_score, 100), reasons
 
     def _score_malware(
         self,
