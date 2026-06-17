@@ -25,6 +25,7 @@ from src.auth.auth import (
     save_single_prediction,
 )
 from src.components.dashboard import show_dashboard
+from src.components.email_summarizer import show_email_summarizer_tab
 from src.database.db import ping as db_ping
 from src.pipeline.prediction_pipeline import PredictionPipeline
 from src.security import CampaignIntelligenceEngine, EmailThreatAnalyzer, QRImageAnalyzer, URLRiskModel
@@ -872,8 +873,8 @@ def main() -> None:
     )
 
     if st.session_state["logged_in"]:
-        tab_dashboard, tab_single, tab_batch, tab_history = st.tabs(
-            ["Bảng điều khiển", "Email đơn", "File MBOX", "Lịch sử"]
+        tab_dashboard, tab_single, tab_batch, tab_summary, tab_history = st.tabs(
+            ["Bảng điều khiển", "Email đơn", "File MBOX", "Tóm tắt", "Lịch sử"]
         )
 
         with tab_dashboard:
@@ -889,16 +890,21 @@ def main() -> None:
         with tab_batch:
             _tab_batch()
 
+        with tab_summary:
+            show_email_summarizer_tab()
+
         with tab_history:
             _tab_history()
     else:
-        tab_single, tab_batch = st.tabs(["Email đơn", "File MBOX (cần đăng nhập)"])
+        tab_single, tab_summary, tab_batch = st.tabs(["Email đơn", "Tóm tắt", "File MBOX (cần đăng nhập)"])
         with tab_single:
             _tab_single_email()
             st.divider()
             _tab_url_phishing()
             st.divider()
             _tab_qr_image_security()
+        with tab_summary:
+            show_email_summarizer_tab()
         with tab_batch:
             _tab_batch()
 
