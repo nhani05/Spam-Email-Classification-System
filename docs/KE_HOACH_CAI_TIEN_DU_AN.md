@@ -1,29 +1,35 @@
-# Ke hoach cai tien du an
+# Kế Hoạch Cải Tiến Dự Án
 
-Tai lieu nay mo ta huong nang cap du an tu mot he thong phan loai spam/ham thanh mot he thong phan tich an toan email tong hop. Dinh huong de xuat la:
+Tài liệu này mô tả hướng nâng cấp dự án từ hệ thống phân loại spam/ham thành hệ thống phân tích an toàn email tổng hợp. Định hướng đề xuất:
 
 ```text
 MailGuard AI: Intelligent Email Threat Detection System
 ```
 
-Muc tieu khong chi tra loi "email nay la spam hay ham", ma tra loi day du hon:
+Mục tiêu không chỉ trả lời:
 
 ```text
-Email nay co nguy hiem khong?
-Nguy hiem o diem nao?
-Vi sao he thong danh gia nhu vay?
-Nguoi dung nen lam gi tiep theo?
+Email này là spam hay ham?
 ```
 
-## Muc tieu nang cap
+mà trả lời đầy đủ hơn:
 
-- Bien du an thanh he thong Email Threat Detection thay vi chi Spam Classification.
-- Ket hop Machine Learning voi rule-based security analysis.
-- Tang tinh giai thich cua ket qua du doan.
-- Bo sung dashboard, feedback loop va kha nang mo rong thanh san pham thuc te.
-- Tao them cac diem demo thuyet phuc: risk score, explainable reasons, QR phishing, URL analysis, admin/security dashboard.
+```text
+Email này có nguy hiểm không?
+Nguy hiểm ở điểm nào?
+Vì sao hệ thống đánh giá như vậy?
+Người dùng nên làm gì tiếp theo?
+```
 
-## Kien truc muc tieu
+## Mục Tiêu Nâng Cấp
+
+- Biến dự án thành hệ thống Email Threat Detection thay vì chỉ Spam Classification.
+- Kết hợp Machine Learning với rule-based security analysis.
+- Tăng tính giải thích của kết quả dự đoán.
+- Bổ sung dashboard, feedback loop và khả năng mở rộng thành sản phẩm thực tế.
+- Tạo thêm các điểm demo thuyết phục: risk score, explainable reasons, QR phishing, URL analysis, admin/security dashboard.
+
+## Kiến Trúc Mục Tiêu
 
 ```text
 Email input / MBOX / QR image
@@ -49,54 +55,44 @@ Final verdict + reasons + recommended actions
 Streamlit UI + history + dashboard + feedback
 ```
 
-## Roadmap tong quan
+## Roadmap Tổng Quan
 
-| Giai doan | Muc tieu | Do kho | Gia tri khi demo |
+| Giai đoạn | Mục tiêu | Độ khó | Giá trị khi demo |
 | --- | --- | --- | --- |
-| Phase 1 | Risk score tong hop va explainable reasons | Trung binh | Rat cao |
-| Phase 2 | URL phishing va QR phishing nang cao | Trung binh/cao | Rat cao |
-| Phase 3 | Security dashboard va history nang cap | Trung binh | Cao |
-| Phase 4 | Feedback loop va model evaluation | Trung binh | Cao |
-| Phase 5 | Admin mode, blacklist/whitelist, report export | Cao | Rat cao |
-| Phase 6 | FastAPI/Docker neu con thoi gian | Cao | Cong diem ky thuat |
+| Phase 1 | Risk score tổng hợp và explainable reasons | Trung bình | Rất cao |
+| Phase 2 | URL phishing và QR phishing nâng cao | Trung bình/cao | Rất cao |
+| Phase 3 | Security dashboard và history nâng cấp | Trung bình | Cao |
+| Phase 4 | Feedback loop và model evaluation | Trung bình | Cao |
+| Phase 5 | Admin mode, blacklist/whitelist, report export | Cao | Rất cao |
+| Phase 6 | FastAPI/Docker nếu còn thời gian | Cao | Cộng điểm kỹ thuật |
 
-## Phase 1: Risk score tong hop
+## Phase 1: Risk Score Tổng Hợp
 
-### Muc tieu
+### Mục Tiêu
 
-Thay vi chi hien thi `Spam` hoac `Ham`, he thong can hien thi:
+Thay vì chỉ hiển thị `Spam` hoặc `Ham`, hệ thống cần hiển thị:
 
 - Spam prediction.
 - Spam confidence.
 - Phishing score.
 - Fake link score.
 - Malware/file risk score.
-- QR risk score neu co anh QR.
-- Overall risk score tu `0-100`.
-- Risk level:
-  - `Low`
-  - `Medium`
-  - `High`
-  - `Critical`
-- Final verdict:
-  - `Safe`
-  - `Suspicious`
-  - `Spam`
-  - `Phishing`
-  - `Malware Risk`
-  - `High Risk`
+- QR risk score nếu có ảnh QR.
+- Overall risk score từ `0-100`.
+- Risk level: `Low`, `Medium`, `High`, `Critical`.
+- Final verdict: `Safe`, `Suspicious`, `Spam`, `Phishing`, `Malware Risk`, `High Risk`.
 
-### De xuat xu ly
+### Đề Xuất Xử Lý
 
-Tao module moi:
+Tạo module:
 
 ```text
 src/security/risk_aggregator.py
 ```
 
-Module nay nhan ket qua tu ML model va cac analyzer hien co, sau do tinh diem tong hop.
+Module này nhận kết quả từ ML model và các analyzer hiện có, sau đó tính điểm tổng hợp.
 
-Cong thuc ban dau co the la rule-based:
+Ví dụ công thức ban đầu:
 
 ```text
 overall_risk = max(
@@ -108,206 +104,105 @@ overall_risk = max(
 )
 ```
 
-Sau do co the tinh lai theo tong co trong so neu can.
+### Tiêu Chí Hoàn Thành
 
-### File can tac dong
+- Mỗi lần phân tích email có risk score `0-100`.
+- UI hiển thị risk level và final verdict.
+- Kết quả có danh sách lý do rõ ràng.
+- Lịch sử lưu thêm risk score và risk level.
 
-- `src/security/email_threat_analyzer.py`
-- `src/security/url_risk_model.py`
-- `src/security/qr_image_analyzer.py`
-- `app.py`
-- `src/auth/auth.py`
-- `db/db.sql`
+## Phase 2: Phishing URL Và QR Phishing
 
-### Tieu chi hoan thanh
+### Mục Tiêu
 
-- Moi lan phan tich email co risk score `0-100`.
-- UI hien thi risk level va final verdict.
-- Ket qua co danh sach ly do ro rang.
-- Lich su luu them risk score va risk level.
+Nâng cấp phân tích link trong email và link giải mã từ QR code.
 
-## Phase 2: Phishing URL va QR phishing
+### URL Features Nên Bổ Sung
 
-### Muc tieu
-
-Nang cap phan tich link trong email va link giai ma tu QR code.
-
-### URL features nen bo sung
-
-- URL dung IP thay vi domain.
-- URL qua dai.
-- Nhieu subdomain bat thuong.
-- Co ky tu `@`, `%`, nhieu dau `-`.
-- Dung `http` thay vi `https`.
-- Domain giong thuong hieu lon nhung khong phai domain chinh thuc.
+- URL dùng IP thay vì domain.
+- URL quá dài.
+- Nhiều subdomain bất thường.
+- Có ký tự `@`, `%`, nhiều dấu `-`.
+- Dùng `http` thay vì `https`.
+- Domain giống thương hiệu lớn nhưng không phải domain chính thức.
 - URL shortener: `bit.ly`, `tinyurl`, `t.co`, `goo.gl`.
-- Tu khoa nhay cam: `login`, `verify`, `secure`, `bank`, `wallet`, `otp`, `password`.
+- Từ khóa nhạy cảm: `login`, `verify`, `secure`, `bank`, `wallet`, `otp`, `password`.
 
-### QR phishing
+### QR Phishing
 
-Dat ten tinh nang:
+Tên tính năng:
 
 ```text
 Quishing Detection
 ```
 
-Quy trinh:
+Quy trình:
 
-1. Nguoi dung upload anh.
-2. He thong decode QR.
-3. Phan tich URL trong QR.
-4. Hien thi URL that va domain.
-5. Canh bao neu QR an link dang nghi.
+1. Người dùng upload ảnh.
+2. Hệ thống decode QR.
+3. Phân tích URL trong QR.
+4. Hiển thị URL thật và domain.
+5. Cảnh báo nếu QR ẩn link đáng nghi.
 
-### File can tac dong
+## Phase 3: Security Dashboard
 
-- `src/security/url_risk_model.py`
-- `src/security/qr_image_analyzer.py`
-- `src/security/email_threat_analyzer.py`
-- `app.py`
+Dashboard không chỉ thống kê spam/ham, mà trở thành dashboard an toàn email.
 
-### Tieu chi hoan thanh
+Chỉ số nên có:
 
-- URL analyzer tra ve `features`, `risk_score`, `verdict`, `reasons`.
-- QR analyzer dung lai URL analyzer.
-- UI hien thi tung ly do cho moi URL/QR.
-
-## Phase 3: Security dashboard
-
-### Muc tieu
-
-Dashboard khong chi thong ke spam/ham, ma tro thanh dashboard an toan email.
-
-### Chi so nen co
-
-- Tong email da phan tich.
-- So email theo nhan `Spam`/`Ham`.
-- So email theo risk level.
-- Ty le email high risk.
+- Tổng email đã phân tích.
+- Số email theo nhãn `Spam`/`Ham`.
+- Số email theo risk level.
+- Tỉ lệ email high risk.
 - Top risky domains.
 - Top suspicious keywords.
-- So QR nguy hiem da phat hien.
-- Bieu do risk theo thoi gian.
-- Danh sach email nguy hiem gan day.
+- Số QR nguy hiểm đã phát hiện.
+- Biểu đồ risk theo thời gian.
+- Danh sách email nguy hiểm gần đây.
 
-### File can tac dong
+## Phase 4: Feedback Loop Và Model Evaluation
 
-- `src/components/dashboard.py`
-- `src/auth/auth.py`
-- `db/db.sql`
-- `app.py`
+### Feedback Loop
 
-### Tieu chi hoan thanh
-
-- Dashboard co it nhat 4 metric chinh.
-- Co bang email high risk gan day.
-- Co bieu do phan bo risk level.
-
-## Phase 4: Feedback loop va model evaluation
-
-### Feedback loop
-
-Sau khi he thong du doan, cho nguoi dung phan hoi:
+Sau khi hệ thống dự đoán, cho người dùng phản hồi:
 
 ```text
-Ket qua dung
-Ket qua sai
+Kết quả đúng
+Kết quả sai
 ```
 
-Du lieu feedback duoc luu vao DB de phuc vu retraining.
+Dữ liệu feedback được lưu vào DB để phục vụ retraining.
 
-Bang de xuat:
+### Model Evaluation
 
-```sql
-CREATE TABLE Prediction_Feedback (
-    id INT NOT NULL AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    prediction_id INT NOT NULL,
-    feedback ENUM('correct', 'incorrect') NOT NULL,
-    corrected_label ENUM('spam', 'ham', 'phishing', 'safe') NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-);
-```
-
-### Model evaluation
-
-Them tab `Model Evaluation` de hien thi:
+Thêm phần `Model Evaluation` để hiển thị:
 
 - Accuracy.
 - Precision.
 - Recall.
 - F1-score.
 - Confusion matrix.
-- Bang so sanh model.
+- Bảng so sánh model.
 - Best model.
 
-### File can tac dong
+## Phase 5: Admin Mode Và Rule Management
 
-- `src/components/model_training.py`
-- `src/components/dashboard.py`
-- `app.py`
-- `src/auth/auth.py`
-- `db/db.sql`
+Mục tiêu là thêm vai trò admin để dự án giống sản phẩm thật hơn.
 
-### Tieu chi hoan thanh
+Chức năng admin:
 
-- Nguoi dung gui feedback duoc.
-- Feedback duoc luu DB.
-- Co man hinh/phan hien thi metric model.
-- Co confusion matrix hoac bang ket qua danh gia.
+- Xem thống kê toàn hệ thống.
+- Xem danh sách email high risk.
+- Quản lý blacklist domain.
+- Quản lý whitelist domain.
+- Quản lý keyword đáng nghi.
+- Xem feedback của người dùng.
 
-## Phase 5: Admin mode va rule management
+## Phase 6: FastAPI Và Docker
 
-### Muc tieu
+Nếu còn thời gian, bổ sung khả năng triển khai và tích hợp.
 
-Them vai tro admin de du an giong mot san pham that hon.
-
-### Chuc nang admin
-
-- Xem thong ke toan he thong.
-- Xem danh sach email high risk.
-- Quan ly blacklist domain.
-- Quan ly whitelist domain.
-- Quan ly keyword dang nghi.
-- Xem feedback cua nguoi dung.
-
-### Bang DB de xuat
-
-```sql
-ALTER TABLE User ADD COLUMN role ENUM('user', 'admin') NOT NULL DEFAULT 'user';
-
-CREATE TABLE Domain_Blacklist (
-    id INT NOT NULL AUTO_INCREMENT,
-    domain VARCHAR(255) NOT NULL UNIQUE,
-    reason TEXT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE Domain_Whitelist (
-    id INT NOT NULL AUTO_INCREMENT,
-    domain VARCHAR(255) NOT NULL UNIQUE,
-    reason TEXT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-);
-```
-
-### Tieu chi hoan thanh
-
-- User role duoc luu trong DB.
-- Admin thay duoc dashboard toan he thong.
-- Admin them/xoa domain blacklist/whitelist duoc.
-- URL analyzer doc duoc blacklist/whitelist khi tinh risk.
-
-## Phase 6: FastAPI va Docker
-
-### Muc tieu
-
-Neu con thoi gian, bo sung kha nang trien khai va tich hop.
-
-### FastAPI endpoint de xuat
+Endpoint FastAPI đề xuất:
 
 ```text
 POST /predict-email
@@ -317,33 +212,16 @@ GET /history
 GET /dashboard
 ```
 
-### Docker
-
-Them:
-
-```text
-Dockerfile
-docker-compose.yml
-```
-
-Service de xuat:
+Docker service đề xuất:
 
 - `app`: Streamlit/FastAPI.
 - `mysql`: MySQL database.
 
-### Tieu chi hoan thanh
+## Thứ Tự Ưu Tiên Để Đạt Điểm Cao
 
-- Chay duoc app bang Docker Compose.
-- API tra ve JSON dung format.
-- README co huong dan chay Docker.
-
-## Thu tu uu tien de dat diem cao
-
-Nen lam theo thu tu:
-
-1. Risk score tong hop.
+1. Risk score tổng hợp.
 2. Explainable reasons.
-3. URL phishing detection nang cao.
+3. URL phishing detection nâng cao.
 4. QR phishing/quishing detection.
 5. Security dashboard.
 6. Feedback loop.
@@ -352,50 +230,61 @@ Nen lam theo thu tu:
 9. Report export.
 10. FastAPI/Docker.
 
-## Ban demo de xuat
+## Bản Demo Đề Xuất
 
-Khi bao ve, nen demo theo kich ban:
+Khi bảo vệ, nên demo theo kịch bản:
 
-1. Mo dashboard gioi thieu he thong MailGuard AI.
-2. Nhap mot email binh thuong va cho thay verdict `Safe`.
-3. Nhap mot email lua dao co link dang nghi va cho thay risk score cao.
-4. Mo phan `Why this result?` de giai thich cac ly do.
-5. Upload anh QR chua link dang nghi va demo Quishing Detection.
-6. Dang nhap tai khoan va xem lich su.
-7. Xu ly mot file MBOX va tai ket qua CSV.
-8. Xem dashboard security sau khi co du lieu.
-9. Gui feedback dung/sai de cho thay he thong co kha nang cai tien.
+1. Mở dashboard giới thiệu hệ thống MailGuard AI.
+2. Nhập một email bình thường và cho thấy verdict `Safe`.
+3. Nhập một email lừa đảo có link đáng nghi và cho thấy risk score cao.
+4. Mở phần `Why this result?` để giải thích các lý do.
+5. Upload ảnh QR chứa link đáng nghi và demo Quishing Detection.
+6. Đăng nhập tài khoản và xem lịch sử.
+7. Xử lý một file MBOX và tải kết quả CSV.
+8. Xem dashboard security sau khi có dữ liệu.
+9. Gửi feedback đúng/sai để cho thấy hệ thống có khả năng cải thiện.
 
-## Phan cong cho 2 thanh vien theo roadmap
+## Hướng Nâng Cấp Mới: Adaptive Threat Intelligence Platform
 
-| Hang muc | Thanh vien 1 | Thanh vien 2 |
-| --- | --- | --- |
-| Risk score aggregator | Phoi hop mapping score tu ML | Phu trach logic security score va UI |
-| Explainable reasons | Ly do tu model/spam keywords | Ly do URL/QR/phishing/malware |
-| URL phishing | Ho tro feature engineering | Phu trach rule-based analyzer |
-| QR phishing | Ho tro test case | Phu trach QR analyzer va UI |
-| Dashboard | Cung cap metric tu pipeline | Phu trach truy van DB va bieu do |
-| Feedback loop | Dung feedback cho retraining | Phu trach form va DB feedback |
-| Model evaluation | Phu trach metric va confusion matrix | Hien thi tren UI |
-| Admin mode | Phoi hop data/rule format | Phu trach role, CRUD rule va dashboard |
-| Docker/API | Phoi hop endpoint predict | Phu trach deployment/app integration |
-
-## Rui ro va cach giam thieu
-
-| Rui ro | Cach giam thieu |
-| --- | --- |
-| Thieu dataset phishing/malware | Ket hop ML spam/ham voi rule-based analyzer |
-| Model path khong khop | Chuan hoa `Config` va README |
-| DB schema thay doi gay loi app | Viet migration SQL rieng va cap nhat `auth.py` |
-| UI qua nhieu tab | Gom theo nhom: Analyze, Batch, Dashboard, History, Admin |
-| Cham khi xu ly MBOX lon | Gioi han preview, cache model, xu ly theo batch |
-
-## Ket qua mong doi
-
-Sau khi hoan thanh cac phase uu tien, du an co the duoc trinh bay nhu mot he thong:
+Để biến đề tài khó hơn nữa, roadmap mới nâng cấp hệ thống thành:
 
 ```text
-MailGuard AI phan tich email bang cach ket hop machine learning,
+MailGuard AI: Adaptive Email Threat Intelligence Platform
+```
+
+Khác với spam classifier thông thường, hệ thống này phân tích email như một security event:
+
+- Trích xuất IoC: sender, domain, URL, QR payload, risky file, brand impersonation, keyword.
+- Phân loại threat taxonomy: Safe, Spam, Phishing, Malware Risk, Business Email Compromise, Quishing, Credential Theft, Payment Scam.
+- Model Lab: so sánh model, threshold tuning, calibration metadata, error analysis.
+- Campaign Intelligence: gom các email liên quan thành phishing/scam campaign.
+- Threat Graph: tạo node/edge giữa campaign, email, sender, URL, domain, brand.
+- Adaptive Learning: feedback người dùng, review queue, export dữ liệu retraining.
+
+Demo nâng cao nên gồm:
+
+1. Chạy email safe và email phishing để thấy threat label khác spam/ham.
+2. Xử lý batch có nhiều email cùng domain phishing để hiển thị campaign.
+3. Tải campaign report Markdown/JSON.
+4. Mở dashboard thấy threat taxonomy, high-risk trend, review queue và model lab.
+5. Gửi feedback sai nhãn và xuất approved retraining data.
+
+## Rủi Ro Và Cách Giảm Thiểu
+
+| Rủi ro | Cách giảm thiểu |
+| --- | --- |
+| Thiếu dataset phishing/malware | Kết hợp ML spam/ham với rule-based analyzer |
+| Model path không khớp | Chuẩn hóa `Config` và README |
+| DB schema thay đổi gây lỗi app | Viết migration SQL riêng và cập nhật `auth.py` |
+| UI quá nhiều tab | Gom theo nhóm: Analyze, Batch, Dashboard, History, Admin |
+| Chậm khi xử lý MBOX lớn | Giới hạn preview, cache model, xử lý theo batch |
+
+## Kết Quả Mong Đợi
+
+Sau khi hoàn thành các phase ưu tiên, dự án có thể được trình bày như một hệ thống:
+
+```text
+MailGuard AI phân tích email bằng cách kết hợp machine learning,
 phishing URL detection, QR threat analysis, explainable risk scoring,
-dashboard bao mat va feedback loop de cai thien model.
+dashboard bảo mật và feedback loop để cải thiện model.
 ```

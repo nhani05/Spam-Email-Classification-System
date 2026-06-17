@@ -4,6 +4,13 @@
 CREATE DATABASE IF NOT EXISTS spam_detection
 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 DROP TABLE IF EXISTS Batch_Prediction_History;
+DROP TABLE IF EXISTS Review_Queue;
+DROP TABLE IF EXISTS Prediction_Feedback;
+DROP TABLE IF EXISTS Campaign_Email;
+DROP TABLE IF EXISTS Threat_Campaign;
+DROP TABLE IF EXISTS Extracted_Indicator;
+DROP TABLE IF EXISTS Prediction_Threat_Metadata;
+DROP TABLE IF EXISTS Model_Run;
 DROP TABLE IF EXISTS Single_Prediction_History;
 DROP TABLE IF EXISTS User;
 
@@ -16,7 +23,7 @@ USE spam_detection;
 CREATE TABLE User (
     id      INT           NOT NULL AUTO_INCREMENT,
     username VARCHAR(12)   NOT NULL UNIQUE,
-    password VARCHAR(12)   NOT NULL,
+    password VARCHAR(255)  NOT NULL,
     created_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (ID)
 );
@@ -52,6 +59,130 @@ CREATE TABLE Single_Prediction_History (
     CONSTRAINT fk_single_user
         FOREIGN KEY (user_id) REFERENCES User(ID)
         ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- ============================================================
+-- ADAPTIVE THREAT INTELLIGENCE EXTENSIONS
+-- ============================================================
+CREATE TABLE Model_Run (
+    id INT NOT NULL AUTO_INCREMENT,
+    run_id VARCHAR(64) NOT NULL UNIQUE,
+    model_name VARCHAR(120) NOT NULL,
+    dataset_identity TEXT NULL,
+    feature_config JSON NULL,
+    taxonomy JSON NULL,
+    metrics JSON NULL,
+    artifact_paths JSON NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE Prediction_Threat_Metadata (
+    id INT NOT NULL AUTO_INCREMENT,
+    prediction_id INT NOT NULL,
+    threat_label VARCHAR(80) NOT NULL DEFAULT 'Safe',
+    risk_score INT NOT NULL DEFAULT 0,
+    risk_level VARCHAR(32) NOT NULL DEFAULT 'Low',
+    verdict VARCHAR(120) NOT NULL DEFAULT 'LOW_RISK_EMAIL',
+    component_scores JSON NULL,
+    indicators JSON NULL,
+    reasons JSON NULL,
+    recommended_actions JSON NULL,
+    campaign_id VARCHAR(64) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_threat_single_prediction
+        FOREIGN KEY (prediction_id) REFERENCES Single_Prediction_History(ID)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE Extracted_Indicator (
+    id INT NOT NULL AUTO_INCREMENT,
+    prediction_id INT NULL,
+    indicator_type VARCHAR(40) NOT NULL,
+    indicator_value TEXT NOT NULL,
+    risk_score INT NOT NULL DEFAULT 0,
+    source VARCHAR(40) NOT NULL DEFAULT 'email',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    INDEX idx_indicator_type (indicator_type),
+    CONSTRAINT fk_indicator_single_prediction
+        FOREIGN KEY (prediction_id) REFERENCES Single_Prediction_History(ID)
+        ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+CREATE TABLE Threat_Campaign (
+    id INT NOT NULL AUTO_INCREMENT,
+    campaign_id VARCHAR(64) NOT NULL UNIQUE,
+    primary_threat_label VARCHAR(80) NOT NULL,
+    risk_level VARCHAR(32) NOT NULL,
+    risk_score INT NOT NULL DEFAULT 0,
+    email_count INT NOT NULL DEFAULT 0,
+    first_seen VARCHAR(80) NULL,
+    last_seen VARCHAR(80) NULL,
+    top_domains JSON NULL,
+    top_brands JSON NULL,
+    representative_reasons JSON NULL,
+    report_markdown MEDIUMTEXT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE Campaign_Email (
+    id INT NOT NULL AUTO_INCREMENT,
+    campaign_id VARCHAR(64) NOT NULL,
+    prediction_id INT NULL,
+    batch_row_index INT NULL,
+    similarity_score DECIMAL(6, 4) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    INDEX idx_campaign_email_campaign (campaign_id),
+    CONSTRAINT fk_campaign_email_single_prediction
+        FOREIGN KEY (prediction_id) REFERENCES Single_Prediction_History(ID)
+        ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+CREATE TABLE Prediction_Feedback (
+    id INT NOT NULL AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    prediction_id INT NULL,
+    feedback ENUM('correct', 'incorrect') NOT NULL,
+    corrected_label VARCHAR(80) NULL,
+    note TEXT NULL,
+    status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+    reviewer VARCHAR(80) NULL,
+    reviewed_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_feedback_user
+        FOREIGN KEY (user_id) REFERENCES User(ID)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_feedback_prediction
+        FOREIGN KEY (prediction_id) REFERENCES Single_Prediction_History(ID)
+        ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+CREATE TABLE Review_Queue (
+    id INT NOT NULL AUTO_INCREMENT,
+    prediction_id INT NULL,
+    feedback_id INT NULL,
+    reason VARCHAR(120) NOT NULL,
+    priority VARCHAR(20) NOT NULL DEFAULT 'medium',
+    model_label VARCHAR(80) NULL,
+    risk_score INT NOT NULL DEFAULT 0,
+    evidence JSON NULL,
+    status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+    approved_label VARCHAR(80) NULL,
+    reviewer VARCHAR(80) NULL,
+    reviewed_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_review_prediction
+        FOREIGN KEY (prediction_id) REFERENCES Single_Prediction_History(ID)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_review_feedback
+        FOREIGN KEY (feedback_id) REFERENCES Prediction_Feedback(ID)
+        ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- ============================================================
@@ -99,3 +230,11 @@ VALUES
  'Buy cheap meds online! No prescription needed. Limited time offer!!!',
  'spam', 99.00,
  '2024-03-02 07:45:00');
+
+INSERT INTO Threat_Campaign
+    (campaign_id, primary_threat_label, risk_level, risk_score, email_count, first_seen, last_seen, top_domains, top_brands, representative_reasons, report_markdown)
+VALUES
+('CAMP-DEMO-001', 'Phishing', 'High', 78, 3, '2024-01-26 10:30:00', '2024-01-26 11:00:00',
+ JSON_ARRAY('fake-bank.com'), JSON_ARRAY('bank'),
+ JSON_ARRAY('Shared phishing domain', 'Urgent credential verification wording'),
+ '# Threat Intelligence Report: CAMP-DEMO-001');

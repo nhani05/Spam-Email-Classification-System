@@ -95,7 +95,7 @@ class URLRiskResult:
 
 
 class URLRiskModel:
-    """Explainable phishing risk model for URLs extracted from email images."""
+    """Explainable phishing risk model for URLs from email text and QR payloads."""
 
     def analyze(self, url: str) -> URLRiskResult:
         if not self._looks_like_url(url):
@@ -195,6 +195,7 @@ class URLRiskModel:
         path_query = f"{parsed.path}?{parsed.query}".lower()
         domain_parts = domain.split(".")
         tld = domain_parts[-1] if domain_parts else ""
+        encoded_char_count = final_url.count("%")
 
         return {
             "uses_https": parsed.scheme == "https",
@@ -202,10 +203,13 @@ class URLRiskModel:
             "is_shortened": domain in SHORTENER_DOMAINS,
             "has_nested_redirect": final_url != url,
             "has_at_symbol": "@" in final_url,
+            "has_encoded_chars": encoded_char_count > 0,
             "has_many_subdomains": max(len(domain_parts) - 2, 0) >= 3,
+            "url_length": len(final_url),
             "domain_length": len(domain),
             "digit_count": sum(ch.isdigit() for ch in domain),
             "hyphen_count": domain.count("-"),
+            "encoded_char_count": encoded_char_count,
             "suspicious_tld": tld in HIGH_RISK_TLDS,
             "keyword_hits": sorted({kw for kw in SENSITIVE_KEYWORDS if kw in path_query or kw in domain}),
             "brand_impersonation": self._detect_brand_impersonation(domain),
@@ -218,10 +222,12 @@ class URLRiskModel:
         checks = [
             (not features["uses_https"], 12, "URL does not use HTTPS."),
             (features["uses_ip_address"], 25, "URL uses a raw IP address instead of a domain."),
-            (features["is_shortened"], 18, "QR code points to a shortened URL."),
+            (features["is_shortened"], 18, "URL points to a shortened URL."),
             (features["has_nested_redirect"], 18, "URL contains a nested redirect parameter."),
             (features["has_at_symbol"], 20, "URL contains '@', which can hide the real destination."),
+            (features["has_encoded_chars"], 8, "URL contains encoded characters such as '%', which can hide text."),
             (features["has_many_subdomains"], 12, "Domain has an unusual number of subdomains."),
+            (features["url_length"] > 120, 12, "URL is unusually long."),
             (features["domain_length"] > 35, 10, "Domain name is unusually long."),
             (features["digit_count"] >= 4, 10, "Domain contains many digits."),
             (features["hyphen_count"] >= 2, 10, "Domain contains many hyphens."),
@@ -262,14 +268,14 @@ class URLRiskModel:
 
     def _verdict(self, score: int, features: Dict[str, object]) -> str:
         if score >= 80:
-            return "PHISHING_QR"
+            return "PHISHING_URL"
         if score >= 60:
-            return "HIGH_RISK_QR"
+            return "HIGH_RISK_URL"
         if score >= 35:
-            return "SUSPICIOUS_QR"
+            return "SUSPICIOUS_URL"
         if features["is_shortened"]:
             return "UNKNOWN_SHORT_LINK"
-        return "LOW_RISK_QR"
+        return "LOW_RISK_URL"
 
     def _is_ip_address(self, value: str) -> bool:
         try:

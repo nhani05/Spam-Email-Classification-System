@@ -9,10 +9,13 @@ class RiskAnalysisResult:
     risk_score: int
     risk_level: str
     verdict: str
+    threat_label: str = "Safe"
     reasons: List[str] = field(default_factory=list)
     recommended_actions: List[str] = field(default_factory=list)
     components: Dict[str, object] = field(default_factory=dict)
     urls: List[Dict[str, object]] = field(default_factory=list)
+    class_scores: Dict[str, float] = field(default_factory=dict)
+    campaign: Dict[str, object] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, object]:
         return {
@@ -21,10 +24,13 @@ class RiskAnalysisResult:
             "risk_score": self.risk_score,
             "risk_level": self.risk_level,
             "verdict": self.verdict,
+            "threat_label": self.threat_label,
             "reasons": self.reasons,
             "recommended_actions": self.recommended_actions,
             "components": self.components,
             "urls": self.urls,
+            "class_scores": self.class_scores,
+            "campaign": self.campaign,
         }
 
 
@@ -36,21 +42,30 @@ class RiskAggregator:
         prediction: str,
         confidence: Optional[float],
         threat_result: object,
+        threat_classification: object = None,
+        campaign_result: Optional[Dict[str, object]] = None,
     ) -> RiskAnalysisResult:
         threat_data = self._as_dict(threat_result)
+        classification_data = self._as_dict(threat_classification)
+        campaign_result = campaign_result or {}
         ml_score, ml_reasons = self._score_ml_prediction(prediction, confidence)
         threat_score = int(threat_data.get("risk_score", 0) or 0)
+        campaign_score = int(campaign_result.get("risk_score", 0) or 0)
 
-        combined_score = max(ml_score, threat_score)
+        combined_score = max(ml_score, threat_score, campaign_score)
         if ml_score >= 35 and threat_score >= 35:
             combined_score += 12
         if prediction.lower() == "ham" and threat_score >= 60:
+            combined_score += 8
+        if campaign_score >= 60:
             combined_score += 8
         risk_score = min(100, combined_score)
 
         reasons = self._dedupe(
             ml_reasons
             + list(threat_data.get("reasons", []))
+            + list(classification_data.get("reasons", []))
+            + self._campaign_reasons(campaign_result)
             + self._conflict_reasons(prediction, threat_score)
         )
         if not reasons:
@@ -61,18 +76,22 @@ class RiskAggregator:
             confidence=confidence,
             risk_score=risk_score,
             risk_level=self._risk_level(risk_score),
-            verdict=self._verdict(risk_score, prediction, threat_data),
+            verdict=self._verdict(risk_score, prediction, threat_data, classification_data),
+            threat_label=str(classification_data.get("label") or self._threat_label_from_scores(prediction, threat_data)),
             reasons=reasons,
             recommended_actions=self._recommended_actions(risk_score, threat_data),
             components={
                 "ml_spam_score": ml_score,
                 "threat_score": threat_score,
+                "campaign_score": campaign_score,
                 "phishing_score": int(threat_data.get("phishing_score", 0) or 0),
                 "fake_link_score": int(threat_data.get("fake_link_score", 0) or 0),
                 "malware_score": int(threat_data.get("malware_score", 0) or 0),
                 "threat_verdict": threat_data.get("verdict", "UNKNOWN"),
             },
             urls=list(threat_data.get("urls", [])),
+            class_scores=dict(classification_data.get("class_scores", {}) or {}),
+            campaign=campaign_result,
         )
         return result
 
@@ -123,7 +142,37 @@ class RiskAggregator:
 
         return self._dedupe(actions)
 
-    def _verdict(self, score: int, prediction: str, threat_data: Dict[str, object]) -> str:
+    def _campaign_reasons(self, campaign_result: Dict[str, object]) -> List[str]:
+        if not campaign_result:
+            return []
+        campaign_id = campaign_result.get("campaign_id")
+        if not campaign_id:
+            return []
+        return [f"Email is linked to campaign {campaign_id} ({campaign_result.get('risk_level', 'Unknown')} risk)."]
+
+    def _threat_label_from_scores(self, prediction: str, threat_data: Dict[str, object]) -> str:
+        if int(threat_data.get("malware_score", 0) or 0) >= 60:
+            return "Malware Risk"
+        if int(threat_data.get("fake_link_score", 0) or 0) >= 35 or int(threat_data.get("phishing_score", 0) or 0) >= 60:
+            return "Phishing"
+        if prediction.lower() == "spam":
+            return "Spam"
+        return "Safe"
+
+    def _verdict(
+        self,
+        score: int,
+        prediction: str,
+        threat_data: Dict[str, object],
+        classification_data: Optional[Dict[str, object]] = None,
+    ) -> str:
+        label = str((classification_data or {}).get("label") or "")
+        if label == "Quishing":
+            return "QUISHING_EMAIL"
+        if label == "Payment Scam":
+            return "PAYMENT_SCAM_EMAIL"
+        if label == "Credential Theft":
+            return "CREDENTIAL_THEFT_EMAIL"
         threat_verdict = str(threat_data.get("verdict", ""))
         malware_score = int(threat_data.get("malware_score", 0) or 0)
         fake_link_score = int(threat_data.get("fake_link_score", 0) or 0)
