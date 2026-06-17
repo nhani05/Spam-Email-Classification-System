@@ -1,8 +1,8 @@
 import os
+import shutil
 import time
 import json
 import pickle
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -15,17 +15,17 @@ from sklearn.ensemble import RandomForestClassifier, StackingClassifier
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, cross_val_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
 
-from src.utils.logger import get_logger
-from src.utils.state import TrainingState
+from src.shared.logger import get_logger
+from src.shared.state import TrainingState
 from src.config.config import Config, ModelConfig
-from src.components.model_lab import (
+from src.features.spam_classifier.model_lab import (
     dataset_identity,
     error_analysis,
     evaluate_predictions,
     save_model_lab_artifacts,
     threshold_report,
 )
-from src.security.email_threat_analyzer import EmailThreatAnalyzer
+from src.features.threat_intelligence.email_threat_analyzer import EmailThreatAnalyzer
 
 logger = get_logger(__name__)
 
@@ -33,14 +33,20 @@ class ModelTraining:
     def __init__(self):
         self.config = Config()
         self.param_grids = ModelConfig.models
-    
+
+    def _prune_output_dirs(self) -> None:
+        output_dir = self.config.current_output_dir
+        if os.path.isdir(output_dir):
+            shutil.rmtree(output_dir, ignore_errors=True)
+
     def save_pickle_files(self, state: TrainingState):
         try:
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            output_dir = os.path.join(self.config.OUTPUT_BASE_DIR, timestamp)
+            self._prune_output_dirs()
+            output_dir = self.config.current_output_dir
+
             models_dir = os.path.join(output_dir, "models")
             observations_dir = os.path.join(output_dir, "observations")
-        
+
             os.makedirs(models_dir, exist_ok=True)
             os.makedirs(observations_dir, exist_ok=True)
 
@@ -48,14 +54,14 @@ class ModelTraining:
             with open(vectorizer_path, 'wb') as f:
                 pickle.dump(state.tfidf_vectorizer, f)
             logger.info(f"Saved TF-IDF vectorizer: {vectorizer_path}")
-        
-            best_model_path = os.path.join(models_dir, f"{state.best_model_name}_model.pkl")
+
+            best_model_path = os.path.join(models_dir, "model.pkl")
             with open(best_model_path, 'wb') as f:
                 pickle.dump(state.best_model, f)
-            logger.info(f"Saved best model: {state.best_model_name}_model.pkl")
-        
+            logger.info(f"Saved best model: {best_model_path}")
+
             metadata = {
-                'timestamp': timestamp,
+                'timestamp': output_dir.rsplit("/", 1)[-1],
                 'best_model_name': state.best_model_name,
                 'best_model_params': str(state.best_params),
                 'best_model_metrics': str(state.model_metrics[state.best_model_name]),
@@ -71,7 +77,7 @@ class ModelTraining:
             metadata_path = os.path.join(observations_dir, "model_metadata.csv")
             pd.DataFrame([metadata]).to_csv(metadata_path, index=False)
             logger.info(f"Saved metadata: {metadata_path}")
-            
+
             return output_dir
 
         except Exception as e:

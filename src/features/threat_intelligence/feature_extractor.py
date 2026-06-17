@@ -6,7 +6,7 @@ from email.message import Message
 from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
-from src.utils.email_utils import all_recipients, clean_text, extract_body
+from src.shared.email_utils import all_recipients, clean_text, extract_body
 
 from .email_threat_analyzer import EmailThreatAnalyzer
 from .url_risk_model import URLRiskModel

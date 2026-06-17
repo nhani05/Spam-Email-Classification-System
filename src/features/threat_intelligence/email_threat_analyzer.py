@@ -121,7 +121,7 @@ class EmailThreatAnalyzer:
         if pipeline is not None and torch is not None:
             try:
                 device = "cuda" if torch.cuda.is_available() else "cpu"
-                model_path = "outputs/phishing_detector_vi"
+                model_path = "outputs/email_phishing_detector_vi"
                 # Nếu chưa tự train, sẽ lấy mô hình trực tiếp từ Hugging Face
                 if not os.path.exists(model_path):
                     model_path = "nxtcute/xlm-r-phishing-and-social-engineering-detector-vi"

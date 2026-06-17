@@ -10,7 +10,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_community.llms.huggingface_pipeline import HuggingFacePipeline
 from transformers import pipeline
 
-from src.components.email_summarizer import load_local_summarizer
+from src.features.email_summarizer.ui import load_local_summarizer
 
 @st.cache_resource
 def get_embedding_model():

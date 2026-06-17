@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from src.database.db import fetchall, fetchone, execute
+from src.infrastructure.database.db import fetchall, fetchone, execute
 
 # ---------------------------------------------------------------------------
 # Password utilities
@@ -452,7 +452,7 @@ def get_history_campaign_candidates(user_id: int, limit: int = 200) -> List[dict
 
 def get_batch_history(user_id: int, limit: int = 20) -> list:
     """Return the most recent batch-processing records for a user."""
-    from src.database.db import fetchall
+    from src.infrastructure.database.db import fetchall
     return fetchall(
         """SELECT id, file_name, total_emails, spam_count, ham_count, created_at
            FROM Batch_Prediction_History

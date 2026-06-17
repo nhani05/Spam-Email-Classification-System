@@ -37,7 +37,7 @@ def main():
     print("\n3. Đang khởi tạo mô hình và Huấn luyện...")
     model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
     
-    output_dir = "outputs/phishing_detector_vi"
+    output_dir = "outputs/email_phishing_detector_vi"
     
     training_args = TrainingArguments(
         output_dir=output_dir, eval_strategy="epoch", learning_rate=2e-5,

@@ -67,7 +67,7 @@ def load_local_summarizer():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     
     # Dùng mô hình "nhà trồng" vừa train xong
-    model_path = "outputs/my_tiny_summarizer"
+    model_path = "outputs/email_summarizer_vi"
     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False, legacy=True)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_path).to(device)
     return tokenizer, model, device

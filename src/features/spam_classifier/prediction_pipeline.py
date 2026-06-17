@@ -5,15 +5,15 @@ import pandas as pd
 from typing import Dict, List, Optional
 from pathlib import Path
 
-from src.utils.state import PredictionState
-from src.utils.logger import get_logger
+from src.shared.state import PredictionState
+from src.shared.logger import get_logger
 from src.config.config import Config
-from src.utils.email_utils import extract_body, all_recipients, clean_text
-from src.security.email_threat_analyzer import EmailThreatAnalyzer
-from src.security.risk_aggregator import RiskAggregator
-from src.security.feature_extractor import EmailFeatureExtractor
-from src.security.threat_taxonomy import ThreatTaxonomyClassifier
-from src.security.campaign_intelligence import CampaignIntelligenceEngine
+from src.shared.email_utils import extract_body, all_recipients, clean_text
+from src.features.threat_intelligence.email_threat_analyzer import EmailThreatAnalyzer
+from src.features.threat_intelligence.risk_aggregator import RiskAggregator
+from src.features.threat_intelligence.feature_extractor import EmailFeatureExtractor
+from src.features.threat_intelligence.threat_taxonomy import ThreatTaxonomyClassifier
+from src.features.threat_intelligence.campaign_intelligence import CampaignIntelligenceEngine
 
 logger = get_logger(__name__)
 

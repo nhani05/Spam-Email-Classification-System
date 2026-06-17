@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 
-from src.auth.auth import export_retraining_data, get_history_campaign_candidates, get_review_queue, get_single_history
-from src.components.model_lab import discover_model_runs
-from src.security.campaign_intelligence import CampaignIntelligenceEngine
+from src.features.auth.service import export_retraining_data, get_history_campaign_candidates, get_review_queue, get_single_history
+from src.features.spam_classifier.model_lab import discover_model_runs
+from src.features.threat_intelligence.campaign_intelligence import CampaignIntelligenceEngine
 
 
 def _risk_level_vi(value):

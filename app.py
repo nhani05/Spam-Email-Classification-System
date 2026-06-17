@@ -14,7 +14,7 @@ import time
 import pandas as pd
 import streamlit as st
 
-from src.auth.auth import (
+from src.features.auth.service import (
     AuthError,
     get_batch_history,
     get_single_history,
@@ -24,13 +24,13 @@ from src.auth.auth import (
     save_prediction_feedback,
     save_single_prediction,
 )
-from src.components.dashboard import show_dashboard
-from src.components.email_summarizer import show_email_summarizer_tab
-from src.components.rag_chatbot import show_rag_chatbot_tab
-from src.database.db import ping as db_ping
-from src.pipeline.prediction_pipeline import PredictionPipeline
-from src.security import CampaignIntelligenceEngine, EmailThreatAnalyzer, QRImageAnalyzer, URLRiskModel
-from src.security.campaign_intelligence import CampaignSummary
+from src.features.dashboard.ui import show_dashboard
+from src.features.email_summarizer.ui import show_email_summarizer_tab
+from src.features.rag_chatbot.ui import show_rag_chatbot_tab
+from src.infrastructure.database.db import ping as db_ping
+from src.features.spam_classifier.prediction_pipeline import PredictionPipeline
+from src.features.threat_intelligence import CampaignIntelligenceEngine, EmailThreatAnalyzer, QRImageAnalyzer, URLRiskModel
+from src.features.threat_intelligence.campaign_intelligence import CampaignSummary
 
 
 st.set_page_config(

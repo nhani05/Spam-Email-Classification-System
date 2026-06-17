@@ -26,9 +26,9 @@ def main():
     print("=== BẮT ĐẦU QUÁ TRÌNH ETL & TRAINING AI TÓM TẮT ===")
     
     # 1. EXTRACT (Trích xuất dữ liệu)
-    # Dùng tập dữ liệu VietNews. Để máy cá nhân không bị treo, ta chỉ lấy 1000 bài báo để dạy.
+    # Dùng tập dữ liệu VietNews. Giới hạn 5000 bài để cân bằng giữa chất lượng và thời gian train.
     print("\n1. Đang tải Dataset Tiếng Việt từ HuggingFace (Extract)...")
-    dataset = load_dataset("nam194/vietnews", split="train[:1000]")
+    dataset = load_dataset("nam194/vietnews", split="train[:5000]")
     
     # Chia tập train / test (90% để học, 10% để thi)
     dataset = dataset.train_test_split(test_size=0.1)
@@ -61,7 +61,7 @@ def main():
     print("\n3. Đang khởi tạo mô hình AI và bắt đầu Huấn luyện (Train)...")
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
     
-    output_dir = "outputs/my_tiny_summarizer"
+    output_dir = "outputs/email_summarizer_vi"
     
     training_args = Seq2SeqTrainingArguments(
         output_dir=output_dir,

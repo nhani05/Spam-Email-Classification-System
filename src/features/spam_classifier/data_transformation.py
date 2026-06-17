@@ -1,6 +1,6 @@
-from src.utils.logger import get_logger
+from src.shared.logger import get_logger
 from src.config.config import Config
-from src.utils.state import TrainingState
+from src.shared.state import TrainingState
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.base import BaseEstimator, TransformerMixin

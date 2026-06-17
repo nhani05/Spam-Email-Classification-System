@@ -1,8 +1,8 @@
-from src.components.data_ingestion import DataIngestion
-from src.components.data_transformation import DataTransformation
-from src.components.model_training import ModelTraining
-from src.utils.state import TrainingState
-from src.utils.logger import get_logger
+from src.features.spam_classifier.data_ingestion import DataIngestion
+from src.features.spam_classifier.data_transformation import DataTransformation
+from src.features.spam_classifier.model_training import ModelTraining
+from src.shared.state import TrainingState
+from src.shared.logger import get_logger
 
 logger = get_logger(__name__)
 

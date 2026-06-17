@@ -1,7 +1,7 @@
 import pandas as pd
-from src.utils.logger import get_logger
+from src.shared.logger import get_logger
 from src.config.config import Config
-from src.utils.state import TrainingState
+from src.shared.state import TrainingState
 
 logger = get_logger(__name__)
 
