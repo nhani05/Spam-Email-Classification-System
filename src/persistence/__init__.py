@@ -4,6 +4,7 @@ from src.persistence.campaigns import save_campaign_summaries
 from src.persistence.feedback import (
     create_review_queue_item,
     export_retraining_data,
+    export_retraining_data_canonical,
     get_review_queue,
     maybe_create_review_queue_item,
     save_prediction_feedback,
@@ -24,6 +25,7 @@ __all__ = [
     "AuthError",
     "create_review_queue_item",
     "export_retraining_data",
+    "export_retraining_data_canonical",
     "get_batch_history",
     "get_history_campaign_candidates",
     "get_review_queue",
