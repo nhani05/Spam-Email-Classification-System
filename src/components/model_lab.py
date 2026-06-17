@@ -130,7 +130,7 @@ def error_analysis(
     y_pred = list(y_pred)
     confidences = list(confidences or [None] * len(texts))
     indicators = list(indicators or [{} for _ in texts])
-    result = {"false_positives": [], "false_negatives": [], "low_confidence": [], "model_rule_conflicts": []}
+    result = {"false_positives": [], "false_negatives": [], "low_confidence": []}
     for index, text in enumerate(texts):
         row = {
             "index": index,
@@ -146,9 +146,6 @@ def error_analysis(
             result["false_negatives"].append(row)
         if confidences[index] is not None and float(confidences[index]) < 60:
             result["low_confidence"].append(row)
-        risk_score = int(indicators[index].get("risk_score", 0) or 0) if isinstance(indicators[index], dict) else 0
-        if y_pred[index] == 0 and risk_score >= 60:
-            result["model_rule_conflicts"].append(row)
     return result
 
 

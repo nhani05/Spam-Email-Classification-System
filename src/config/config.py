@@ -3,10 +3,14 @@ from dataclasses import dataclass
 @dataclass
 class Config:
     training_data_path: str = "data/dataset/dataset.csv"
+    ai_threat_email_data_path: str = "data/ai_threat/email_threat_seed.csv"
+    ai_threat_url_data_path: str = "data/ai_threat/url_threat_seed.csv"
     validation_data_path: str = "data/dataset/All_mail_Including_Spam_and_Trash.mbox"
     OUTPUT_BASE_DIR: str = "outputs"
     model_path: str = "outputs/2026-06-08_09-08-52/models/SVM_model.pkl"
     feature_path: str = "outputs/2026-06-08_09-08-52/models/vectorizer.pkl"
+    ai_threat_model_path: str = ""
+    ai_url_model_path: str = ""
 
 class ModelConfig:
     models = {

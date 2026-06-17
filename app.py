@@ -27,9 +27,11 @@ from src.auth.auth import (
 from src.components.dashboard import show_dashboard
 from src.database.db import ping as db_ping
 from src.pipeline.prediction_pipeline import PredictionPipeline
-from src.security import CampaignIntelligenceEngine, EmailThreatAnalyzer, QRImageAnalyzer, URLRiskModel
+from src.security import CampaignIntelligenceEngine, QRImageAnalyzer, URLRiskModel
 from src.security.campaign_intelligence import CampaignSummary
+from src.utils.logger import get_logger
 
+logger = get_logger(__name__)
 
 st.set_page_config(
     page_title="MailGuard AI",
@@ -59,11 +61,6 @@ def get_pipeline() -> PredictionPipeline:
 @st.cache_resource
 def get_qr_analyzer() -> QRImageAnalyzer:
     return QRImageAnalyzer()
-
-
-@st.cache_resource
-def get_email_threat_analyzer() -> EmailThreatAnalyzer:
-    return EmailThreatAnalyzer()
 
 
 @st.cache_resource
@@ -394,10 +391,12 @@ def _sidebar_register_form() -> None:
 
 
 def _show_url_result(url_info: dict, title_prefix: str = "URL", expanded: bool = True) -> None:
-    title = f"{title_prefix}: {_verdict_vi(url_info['verdict'])} - {url_info['risk_score']}/100"
+    unavailable = url_info.get("risk_level") == "Unavailable" or url_info.get("verdict") == "AI_URL_MODEL_UNAVAILABLE"
+    score_label = f"{url_info['risk_score']}/100" if not unavailable else "N/A"
+    title = f"{title_prefix}: {_verdict_vi(url_info['verdict'])} - {score_label}"
     with st.expander(title, expanded=expanded):
         cols = st.columns(3)
-        cols[0].metric("Điểm rủi ro", f"{url_info['risk_score']}/100")
+        cols[0].metric("Điểm rủi ro", score_label)
         cols[1].metric("Mức rủi ro", _risk_level_vi(url_info["risk_level"]))
         cols[2].metric("Tên miền", url_info["domain"] or "Không có")
 
@@ -411,6 +410,11 @@ def _show_url_result(url_info: dict, title_prefix: str = "URL", expanded: bool =
             st.write(f"- {_message_vi(reason)}")
 
         st.write("Đặc trưng URL đã trích xuất:")
+        ai_model = url_info.get("features", {}).get("ai_model", {})
+        if ai_model:
+            st.write("AI URL model:")
+            st.json(ai_model)
+
         st.json(_features_vi(url_info["features"]))
 
 
@@ -432,17 +436,29 @@ def _tab_url_phishing() -> None:
         st.warning("Vui lòng nhập ít nhất một URL.")
         return
 
+    logger.info("UI action | URL phishing analysis requested | count=%s", len(candidates))
     analyzer = get_url_risk_model()
     results = [analyzer.analyze(candidate).to_dict() for candidate in candidates]
     max_score = max(result["risk_score"] for result in results)
-    suspicious_count = sum(result["risk_score"] >= 35 for result in results)
+    model_unavailable_count = sum(
+        result.get("features", {}).get("ai_model", {}).get("provenance", {}).get("risk_source") == "model_unavailable"
+        or result.get("verdict") == "AI_URL_MODEL_UNAVAILABLE"
+        for result in results
+    )
+    suspicious_count = sum(
+        result["risk_score"] >= 35
+        for result in results
+        if result.get("verdict") != "AI_URL_MODEL_UNAVAILABLE"
+    )
 
     cols = st.columns(3)
     cols[0].metric("Số URL đã phân tích", len(results))
     cols[1].metric("URL đáng nghi", suspicious_count)
     cols[2].metric("Điểm rủi ro cao nhất", f"{max_score}/100")
 
-    if max_score >= 80:
+    if model_unavailable_count == len(results):
+        st.info("Chưa có artifact AI URL model nên hệ thống không chấm điểm URL bằng rule. Hãy train model và cấu hình ai_url_model_path.")
+    elif max_score >= 80:
         st.error("Có ít nhất một URL có dấu hiệu phishing nghiêm trọng.")
     elif max_score >= 35:
         st.warning("Có ít nhất một URL có dấu hiệu đáng nghi.")
@@ -513,6 +529,7 @@ def _tab_single_email() -> None:
             st.warning("Vui lòng nhập nội dung email.")
             return
 
+        logger.info("UI action | single email analysis requested | chars=%s", len(email_text))
         with st.spinner("Đang phân tích email..."):
             try:
                 result = pipeline.predict_single_email(email_text)
@@ -534,8 +551,14 @@ def _tab_single_email() -> None:
             st.metric("Độ tin cậy", f"{confidence:.1f}%")
 
         st.subheader("Phân tích rủi ro MailGuard")
+        provenance = result.get("model_provenance", {})
+        risk_source = provenance.get("risk_source", "model_unavailable")
+        st.caption(
+            "Risk analysis source: "
+            + ("AI threat model" if risk_source == "ai_model" else "AI model unavailable")
+        )
         risk_cols = st.columns(4)
-        risk_cols[0].metric("Điểm rủi ro", f"{risk_result['risk_score']}/100")
+        risk_cols[0].metric("Điểm rủi ro", f"{risk_result['risk_score']}/100" if risk_source == "ai_model" else "N/A")
         risk_cols[1].metric("Mức rủi ro", _risk_level_vi(risk_result["risk_level"]))
         risk_cols[2].metric(
             "Nhãn đe dọa",
@@ -544,7 +567,9 @@ def _tab_single_email() -> None:
         risk_cols[3].metric("Kết luận", _verdict_vi(risk_result["verdict"]))
 
         final_message = f"Kết luận cuối cùng: {_verdict_vi(risk_result['verdict'])} ({_risk_level_vi(risk_result['risk_level'])})"
-        if risk_result["risk_score"] >= 80:
+        if risk_source == "model_unavailable":
+            st.info("Chưa có artifact model AI nên hệ thống không chấm điểm rủi ro bằng rule. Hãy train model và cấu hình path trước khi demo risk scoring.")
+        elif risk_result["risk_score"] >= 80:
             st.error(final_message)
         elif risk_result["risk_score"] >= 35:
             st.warning(final_message)
@@ -553,14 +578,17 @@ def _tab_single_email() -> None:
 
         st.subheader("Thành phần phát hiện đe dọa")
         threat_cols = st.columns(4)
-        threat_cols[0].metric("Điểm ML spam", risk_result["components"]["ml_spam_score"])
-        threat_cols[1].metric("Phishing", threat_result["phishing_score"])
-        threat_cols[2].metric("Fake link", threat_result["fake_link_score"])
-        threat_cols[3].metric("Malware", threat_result["malware_score"])
+        threat_cols[0].metric("Điểm ML spam", risk_result["components"].get("ml_spam_score"))
+        threat_cols[1].metric("AI model", "Có" if risk_source == "ai_model" else "Chưa có")
+        threat_cols[2].metric("URL trích xuất", len(threat_result.get("urls", [])))
+        threat_cols[3].metric("File đáng chú ý", len(threat_result.get("risky_files", [])))
 
         with st.expander("Vì sao có kết quả này?", expanded=risk_result["risk_score"] >= 35):
             st.write("Điểm theo từng lớp:")
             st.json(result.get("class_scores", {}))
+
+            st.write("Model provenance:")
+            st.json(provenance)
 
             st.write("Chỉ báo đã trích xuất:")
             st.json(result.get("indicators", {}))
@@ -573,14 +601,14 @@ def _tab_single_email() -> None:
             for action in risk_result["recommended_actions"]:
                 st.write(f"- {_message_vi(action)}")
 
-            if threat_result["risky_files"]:
+            if threat_result.get("risky_files"):
                 st.write("File đáng nghi:")
-                for filename in threat_result["risky_files"]:
+                for filename in threat_result.get("risky_files", []):
                     st.code(filename, language="text")
 
-        if threat_result["urls"]:
+        if threat_result.get("urls"):
             st.subheader("Phân tích URL trong email")
-            for index, url_info in enumerate(threat_result["urls"], start=1):
+            for index, url_info in enumerate(threat_result.get("urls", []), start=1):
                 _show_url_result(
                     url_info,
                     title_prefix=f"URL phát hiện #{index}",
@@ -620,6 +648,7 @@ def _tab_batch() -> None:
     if uploaded_file is None or not st.button("Xử lý file", type="primary"):
         return
 
+    logger.info("UI action | MBOX batch analysis requested | file=%s", uploaded_file.name)
     with st.spinner("Đang xử lý file, vui lòng chờ..."):
         try:
             with tempfile.NamedTemporaryFile(delete=False, suffix=".mbox") as tmp:
@@ -651,7 +680,17 @@ def _tab_batch() -> None:
     st.subheader("Kết quả mẫu")
     preview_columns = _safe_columns(
         df,
-        ["Time", "Subject", "Prediction", "Threat Label", "Risk Score", "Risk Level", "Verdict", "Campaign ID"],
+        [
+            "Time",
+            "Subject",
+            "Prediction",
+            "Threat Label",
+            "Risk Score",
+            "Risk Level",
+            "Verdict",
+            "Risk Source",
+            "Campaign ID",
+        ],
     )
     preview_df = df[preview_columns].head(10).copy()
     preview_df = preview_df.rename(
@@ -764,6 +803,7 @@ def _tab_qr_image_security() -> None:
     if not st.button("Phân tích ảnh QR", type="primary"):
         return
 
+    logger.info("UI action | QR image analysis requested | file=%s | bytes=%s", uploaded_image.name, len(image_bytes))
     analyzer = get_qr_analyzer()
     with st.spinner("Đang phân tích QR..."):
         try:

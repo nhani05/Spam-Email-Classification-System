@@ -61,8 +61,16 @@ class QRImageAnalyzer:
             )
 
         max_score = max(item["risk_score"] for item in qr_results)
-        risk_level = self._risk_level(max_score)
-        final_verdict = self._final_verdict(max_score)
+        has_ai_score = any(
+            item.get("features", {}).get("ai_model", {}).get("provenance", {}).get("risk_source") == "ai_model"
+            for item in qr_results
+        )
+        if has_ai_score:
+            risk_level = self._risk_level(max_score)
+            final_verdict = self._final_verdict(max_score)
+        else:
+            risk_level = "Unavailable"
+            final_verdict = "AI_URL_MODEL_UNAVAILABLE"
         reasons = self._combine_reasons(qr_results)
 
         return QRImageAnalysisResult(

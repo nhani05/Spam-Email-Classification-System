@@ -1,0 +1,13 @@
+url,label,risk_level,source,label_source,is_weak_label
+https://www.google.com/security,benign,Low,local_seed,curated,false
+https://www.paypal.com/signin,benign,Low,local_seed,curated,false
+https://portal.company.com/invoice/123,benign,Low,local_seed,curated,false
+https://momo.vn/help/payment,benign,Low,local_seed,curated,false
+http://paypa1-login.xyz/verify,phishing,High,local_seed,curated,false
+http://secure-bank-login.xyz/reset-password,phishing,Critical,local_seed,curated,false
+http://192.168.1.44/account/verify,phishing,High,local_seed,curated,false
+https://bit.ly/paypal-secure-reset,suspicious,Medium,local_seed,curated,false
+http://microsoft-security-update.click/login,phishing,High,local_seed,curated,false
+http://example.com/redirect?url=https%3A%2F%2Ffake-wallet-login.xyz%2Fauth,phishing,High,local_seed,curated,false
+https://support.company.com/reset-password,benign,Low,local_seed,curated,false
+http://invoice-payment-review.top/pay-now,phishing,High,local_seed,curated,false

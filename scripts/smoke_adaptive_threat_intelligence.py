@@ -6,12 +6,26 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.pipeline.prediction_pipeline import PredictionPipeline
+from src.config.config import Config
+from src.security.ai_threat_model import AIThreatModelService, train_ai_threat_models
 from src.security.campaign_intelligence import CampaignIntelligenceEngine, CampaignSummary
 from src.security.feature_extractor import EmailFeatureExtractor
 
 
 def main() -> None:
+    config = Config()
+    metadata = train_ai_threat_models(
+        email_dataset_path=config.ai_threat_email_data_path,
+        url_dataset_path=config.ai_threat_url_data_path,
+        output_base_dir=config.OUTPUT_BASE_DIR,
+    )
+    service = AIThreatModelService(
+        email_model_path=metadata["artifact_paths"]["email_model_path"],
+        url_model_path=metadata["artifact_paths"]["url_model_path"],
+    )
+
     extractor = EmailFeatureExtractor()
+    extractor.url_model.ai_service = service
     feature_record = extractor.from_text(
         "URGENT verify your account at http://fake-bank-login.xyz/reset and open invoice.pdf.exe",
         subject="Bank verification",
@@ -25,6 +39,8 @@ def main() -> None:
     assert feature_record.qr_payloads, "QR payload features should be attached"
 
     pipeline = PredictionPipeline()
+    pipeline.ai_threat_service = service
+    pipeline.feature_extractor.url_model.ai_service = service
     single = pipeline.predict_single_email(
         "URGENT verify your PayPal password at http://paypa1-login.xyz/reset"
     )

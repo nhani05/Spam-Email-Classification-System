@@ -5,6 +5,10 @@ from difflib import SequenceMatcher
 from typing import Dict, List
 from urllib.parse import parse_qs, unquote, urlparse
 
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 SHORTENER_DOMAINS = {
     "bit.ly",
@@ -97,7 +101,20 @@ class URLRiskResult:
 class URLRiskModel:
     """Explainable phishing risk model for URLs from email text and QR payloads."""
 
+    def __init__(self, ai_service=None) -> None:
+        self.ai_service = ai_service
+        if self.ai_service is None:
+            try:
+                from src.config.config import Config
+                from src.security.ai_threat_model import AIThreatModelService
+
+                config = Config()
+                self.ai_service = AIThreatModelService(url_model_path=config.ai_url_model_path)
+            except Exception:
+                self.ai_service = None
+
     def analyze(self, url: str) -> URLRiskResult:
+        logger.info("URL analysis started | url=%s", url)
         if not self._looks_like_url(url):
             return self._analyze_non_url_qr(url)
 
@@ -110,9 +127,56 @@ class URLRiskModel:
         final_domain = (final_parsed.hostname or domain).lower().strip(".")
 
         features = self._extract_features(normalized_url, final_url, final_domain)
-        score, reasons = self._score(features, final_domain, final_url)
-        risk_level = self._risk_level(score)
-        verdict = self._verdict(score, features)
+        score = 0
+        risk_level = "Unavailable"
+        verdict = "AI_URL_MODEL_UNAVAILABLE"
+        reasons = [
+            "AI URL phishing model artifacts are unavailable.",
+            "Train the AI URL model and configure ai_url_model_path before using URL risk scoring.",
+        ]
+        if self.ai_service is not None:
+            ai_result = self.ai_service.predict_url(url)
+            if ai_result and ai_result.get("model_available"):
+                score = int(ai_result["risk_score"])
+                risk_level = str(ai_result["risk_level"])
+                verdict = str(ai_result["verdict"])
+                features = {
+                    **features,
+                    "ai_model": {
+                        "model_label": ai_result.get("model_label"),
+                        "model_probability": ai_result.get("model_probability"),
+                        "class_scores": ai_result.get("class_scores", {}),
+                        "provenance": ai_result.get("provenance", {}),
+                    },
+                }
+                reasons = list(ai_result.get("reasons", []))
+                logger.info(
+                    "URL analysis using AI model | domain=%s | risk=%s | verdict=%s",
+                    final_domain,
+                    score,
+                    verdict,
+                )
+            else:
+                if ai_result:
+                    features = {
+                        **features,
+                        "ai_model": {
+                            "model_label": ai_result.get("model_label"),
+                            "model_probability": ai_result.get("model_probability"),
+                            "class_scores": ai_result.get("class_scores", {}),
+                            "provenance": ai_result.get("provenance", {}),
+                        },
+                    }
+                    reasons = list(ai_result.get("reasons", reasons))
+                logger.info(
+                    "URL analysis model unavailable | domain=%s | risk_source=model_unavailable",
+                    final_domain,
+                )
+        else:
+            logger.info(
+                "URL analysis model unavailable | domain=%s | risk_source=model_unavailable",
+                final_domain,
+            )
 
         return URLRiskResult(
             url=url,
@@ -122,7 +186,7 @@ class URLRiskModel:
             risk_level=risk_level,
             verdict=verdict,
             features=features,
-            reasons=reasons or ["No strong phishing signal found."],
+            reasons=reasons,
         )
 
     def _looks_like_url(self, value: str) -> bool:
@@ -140,9 +204,9 @@ class URLRiskModel:
                 url=value,
                 final_url=value,
                 domain="",
-                risk_score=40,
-                risk_level="Medium",
-                verdict="PAYMENT_QR_REVIEW",
+                risk_score=0,
+                risk_level="Unavailable",
+                verdict="NON_URL_QR_UNSCORED",
                 features={
                     "is_url": False,
                     "is_payment_payload": True,
@@ -150,8 +214,7 @@ class URLRiskModel:
                 },
                 reasons=[
                     "QR code contains a payment payload, not a web URL.",
-                    "Verify recipient name, bank, and account number before transferring money.",
-                    "Payment QR codes in unexpected emails can be used for invoice or receipt scams.",
+                    "AI URL model scoring applies only to decoded URLs; this payload is retained as evidence without a rule-derived risk verdict.",
                 ],
             )
 
@@ -159,15 +222,15 @@ class URLRiskModel:
             url=value,
             final_url=value,
             domain="",
-            risk_score=20,
-            risk_level="Low",
-            verdict="NON_URL_QR",
+            risk_score=0,
+            risk_level="Unavailable",
+            verdict="NON_URL_QR_UNSCORED",
             features={
                 "is_url": False,
                 "is_payment_payload": False,
                 "payload_length": len(compact),
             },
-            reasons=["QR code was decoded, but it does not contain a web URL."],
+            reasons=["QR code was decoded, but it does not contain a web URL; no rule-derived risk verdict was assigned."],
         )
 
     def _normalize_url(self, url: str) -> str:

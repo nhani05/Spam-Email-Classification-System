@@ -8,7 +8,6 @@ from urllib.parse import urlparse
 
 from src.utils.email_utils import all_recipients, clean_text, extract_body
 
-from .email_threat_analyzer import EmailThreatAnalyzer
 from .url_risk_model import URLRiskModel
 
 
@@ -44,7 +43,6 @@ class EmailFeatureRecord:
     qr_payloads: List[Dict[str, object]] = field(default_factory=list)
     risky_files: List[str] = field(default_factory=list)
     suspicious_keywords: List[str] = field(default_factory=list)
-    rule_scores: Dict[str, int] = field(default_factory=dict)
     indicators: Dict[str, object] = field(default_factory=dict)
     missing_fields: List[str] = field(default_factory=list)
 
@@ -64,7 +62,6 @@ class EmailFeatureRecord:
             "qr_payloads": self.qr_payloads,
             "risky_files": self.risky_files,
             "suspicious_keywords": self.suspicious_keywords,
-            "rule_scores": self.rule_scores,
             "indicators": self.indicators,
             "missing_fields": self.missing_fields,
         }
@@ -74,7 +71,6 @@ class EmailFeatureExtractor:
     """Create structured security-event features from pasted text or MBOX messages."""
 
     def __init__(self) -> None:
-        self.threat_analyzer = EmailThreatAnalyzer()
         self.url_model = URLRiskModel()
 
     def from_text(
@@ -88,13 +84,12 @@ class EmailFeatureExtractor:
         qr_payloads: Optional[List[str]] = None,
     ) -> EmailFeatureRecord:
         body = clean_text(email_text or "")
-        threat = self.threat_analyzer.analyze(email_text or "")
-        threat_data = threat.to_dict()
+        urls = self._extract_urls(email_text or "")
+        url_results = [self.url_model.analyze(value).to_dict() for value in urls]
         qr_results = [self.url_model.analyze(value).to_dict() for value in (qr_payloads or [])]
         sender_domain = self._domain_from_email(sender)
         reply_to_domain = self._domain_from_email(reply_to)
         keywords = self._keyword_hits(" ".join([subject, body]))
-        urls = list(threat_data.get("urls", []) or [])
 
         record = EmailFeatureRecord(
             body=body,
@@ -105,16 +100,10 @@ class EmailFeatureExtractor:
             reply_to=reply_to or "",
             reply_to_domain=reply_to_domain,
             timestamp=timestamp or "",
-            urls=urls,
+            urls=url_results,
             qr_payloads=qr_results,
-            risky_files=list(threat_data.get("risky_files", []) or []),
+            risky_files=self._risky_filenames(email_text or ""),
             suspicious_keywords=keywords,
-            rule_scores={
-                "risk_score": int(threat_data.get("risk_score", 0) or 0),
-                "phishing_score": int(threat_data.get("phishing_score", 0) or 0),
-                "fake_link_score": int(threat_data.get("fake_link_score", 0) or 0),
-                "malware_score": int(threat_data.get("malware_score", 0) or 0),
-            },
         )
         record.missing_fields = self._missing_fields(record)
         record.indicators = self._indicators(record)
@@ -184,6 +173,16 @@ class EmailFeatureExtractor:
     def _keyword_hits(self, text: str) -> List[str]:
         normalized = (text or "").lower()
         return sorted({keyword for keyword in SUSPICIOUS_KEYWORDS if keyword in normalized})
+
+    def _extract_urls(self, text: str) -> List[str]:
+        return re.findall(r"https?://[^\s<>'\"]+|(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}(?:/[^\s<>'\"]*)?", text or "")
+
+    def _risky_filenames(self, text: str) -> List[str]:
+        return re.findall(
+            r"\b[\w.-]+\.(?:exe|scr|bat|cmd|js|vbs|msi|apk|jar|zip|rar|7z)\b",
+            text or "",
+            flags=re.IGNORECASE,
+        )
 
     def _missing_fields(self, record: EmailFeatureRecord) -> List[str]:
         missing = []
