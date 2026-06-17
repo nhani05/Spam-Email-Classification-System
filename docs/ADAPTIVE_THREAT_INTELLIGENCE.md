@@ -136,7 +136,7 @@ outputs/<timestamp>/observations/error_analysis.json
 
 ## Database Migration
 
-Chạy `db/db.sql` trên MySQL database mới hoặc copy phần bảng mở rộng vào schema hiện có. Các bảng mới:
+Chạy `database/schema.sql` trên MySQL database mới hoặc copy phần bảng mở rộng vào schema hiện có. Các bảng mới:
 
 - `Model_Run`
 - `Prediction_Threat_Metadata`

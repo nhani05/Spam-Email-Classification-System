@@ -130,7 +130,7 @@ outputs/<timestamp>/observations/model_lab_metadata.json
 | `src/security/feature_extractor.py` | Trích xuất đặc trưng email |
 | `src/security/threat_taxonomy.py` | Phân loại threat taxonomy |
 | `src/security/campaign_intelligence.py` | Campaign detection, graph data, report |
-| `db/db.sql` | Script tạo database và dữ liệu mẫu |
+| `database/schema.sql` | Script tạo database và dữ liệu mẫu |
 | `.env` | Biến môi trường kết nối database |
 
 ### Kết Quả Cần Đảm Bảo

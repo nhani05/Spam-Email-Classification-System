@@ -36,9 +36,12 @@ Hệ thống phân loại email spam/ham bằng Machine Learning, có giao diệ
 |-- data/
 |   |-- dataset/dataset.csv        # Dữ liệu huấn luyện
 |   `-- models/v1/                 # Model/vectorizer có sẵn
-|-- db/
-|   `-- db.sql                     # Script tạo database MySQL
+|-- database/
+|   |-- schema.sql                 # Script tạo database MySQL chính
+|   |-- legacy_schema.sql          # Schema MySQL phiên bản cũ
+|   `-- local/                     # SQLite local/runtime
 |-- docs/                          # Tài liệu dự án, demo, roadmap
+|-- notebooks/                     # Notebook thử nghiệm
 |-- scripts/                       # Smoke checks và tiện ích demo
 |-- src/
 |   |-- auth/                      # Đăng nhập, đăng ký, lưu và đọc lịch sử
@@ -48,7 +51,6 @@ Hệ thống phân loại email spam/ham bằng Machine Learning, có giao diệ
 |   |-- pipeline/                  # Training và prediction pipeline
 |   |-- security/                  # Phân tích URL, QR, email threat, campaign
 |   `-- utils/                     # Logger, email utils, state, DB helpers
-`-- Notebook Experiments/          # Notebook thử nghiệm
 ```
 
 ## Yêu Cầu Môi Trường
@@ -83,7 +85,7 @@ uv sync
 Tạo database MySQL bằng file script:
 
 ```bash
-mysql -u root -p < db/db.sql
+mysql -u root -p < database/schema.sql
 ```
 
 Tạo file `.env` ở thư mục gốc dự án:
