@@ -613,18 +613,31 @@ Hướng phát triển tiếp theo là bổ sung dữ liệu phishing thật, th
 
 ## AI Risk Model Demo Note
 
-Neu muon demo risk analysis la AI/ML that, chay:
+Neu muon demo risk analysis la AI/ML that, giai thich quy trinh train model:
+
+```text
+Data -> Cleaning -> Feature -> Train -> Evaluate -> Save model -> App integration -> Feedback -> Retrain
+```
+
+Production model khong train truc tiep tu seed CSV. Build canonical dataset tu nguon local nhu PhishFuzzer, Nazario, SpamAssassin, Enron, PhishTank, URLhaus hoac reviewed feedback:
 
 ```bash
-python scripts\train_ai_threat_models.py
+python scripts\train_ai_threat_models.py --stage import --phishfuzzer-json data\ai_threat\raw\phishfuzzer.json
+python scripts\train_ai_threat_models.py --force --publish
+```
+
+Neu chi can smoke test nhanh voi fixture:
+
+```bash
+python scripts\train_ai_threat_models.py --fixture-mode --force
 python scripts\smoke_ai_threat_models.py
 ```
 
-Sau khi train, copy hai path artifact in ra terminal vao `src/config/config.py`:
+Sau khi publish gate pass, app dung artifact current:
 
 ```python
-ai_threat_model_path = "outputs/<timestamp>_ai-threat/models/email_threat_model.pkl"
-ai_url_model_path = "outputs/<timestamp>_ai-threat/models/url_phishing_model.pkl"
+ai_threat_model_path = "outputs/ai-threat-current/models/email_threat_model.pkl"
+ai_url_model_path = "outputs/ai-threat-current/models/url_phishing_model.pkl"
 ```
 
 Khi duoc hoi, giai thich ngan gon: spam/ham model van duoc giu, nhung threat/risk layer dung supervised AI model rieng. Neu artifact AI chua duoc cau hinh, he thong hien `model_unavailable` va khong fallback sang rule-based scoring.

@@ -175,12 +175,22 @@ python scripts/smoke_adaptive_threat_intelligence.py
 
 ## AI Threat Risk Model
 
-Tang risk analysis moi su dung supervised ML thay vi chi dua vao diem rule co dinh.
+Tang risk analysis moi su dung supervised ML thay vi chi dua vao diem rule co dinh. Vong doi tao model duoc chuan hoa:
 
-- `src/security/ai_threat_model.py`: schema dataset, feature builders, training, evaluation, artifact loading va prediction.
-- `data/ai_threat/email_threat_seed.csv`: seed dataset cho email threat labels.
-- `data/ai_threat/url_threat_seed.csv`: seed dataset cho URL phishing labels.
-- `scripts/train_ai_threat_models.py`: train email threat classifier va URL phishing classifier.
+```text
+Data -> Cleaning -> Feature -> Train -> Evaluate -> Save model -> App integration -> Feedback -> Retrain
+```
+
+- `src/ml/threat_classifier/schema.py`: canonical schema, data layout, source config, publish gate config.
+- `src/ml/threat_classifier/importers.py`: import PhishFuzzer, Nazario mbox, SpamAssassin, Enron, PhishTank, URLhaus va reviewed feedback tu file local.
+- `src/ml/threat_classifier/canonical.py`: cleaning, normalization, validation, quarantine invalid rows va deduplication.
+- `src/ml/threat_classifier/lifecycle.py`: orchestrate import -> canonical -> train -> evaluate -> save -> publish.
+- `src/security/ai_threat_model.py`: compatibility path cho artifact loading va prediction.
+- `data/ai_threat/email_threat_seed.csv`: fixture nho cho smoke test, khong phai production training source.
+- `data/ai_threat/url_threat_seed.csv`: fixture nho cho smoke test, khong phai production training source.
+- `scripts/train_ai_threat_models.py`: import canonical data, train, evaluate va publish model sau publish gate.
 - `scripts/smoke_ai_threat_models.py`: smoke check train/predict/model-unavailable behavior.
 
-Khi `ai_threat_model_path` va `ai_url_model_path` trong `src/config/config.py` tro den artifact hop le, prediction pipeline dung AI model lam nguon duy nhat cho `threat_label`, `class_scores`, `risk_score`, `risk_level` va `verdict`. Neu artifact khong ton tai, pipeline tra `model_unavailable` va khong fallback sang rule-based scoring.
+Production retraining phai dung canonical CSV trong `data/ai_threat/canonical/`, duoc build tu nguon ngoai hoac feedback da approve. Neu chi co seed/fixture data, command production se dung lai truoc khi train; fixture chi duoc phep khi chay `--fixture-mode`. Weak/generated/synthetic labels duoc dem rieng trong metadata va bi loai khoi primary training/evaluation mac dinh; chi include khi operator chay `--include-weak-labels`.
+
+Khi `ai_threat_model_path` va `ai_url_model_path` trong `src/config/config.py` tro den artifact hop le co `artifact_schema_version`, prediction pipeline dung AI model lam nguon duy nhat cho `threat_label`, `class_scores`, `risk_score`, `risk_level` va `verdict`. Neu artifact khong ton tai hoac khong tuong thich schema, pipeline tra `model_unavailable` va khong fallback sang rule-based scoring.

@@ -225,23 +225,63 @@ adaptive threat intelligence smoke passed
 
 ## AI Threat Risk Model
 
-Du an co them pipeline AI/ML rieng cho risk analysis:
+Du an co them pipeline AI/ML rieng cho risk analysis. Quy trinh train lai chuan la:
+
+```text
+Data -> Cleaning -> Feature -> Train -> Evaluate -> Save model -> App integration -> Feedback -> Retrain
+```
+
+Du lieu production khong duoc train truc tiep tu seed CSV. Seed trong `data/ai_threat/email_threat_seed.csv` va `data/ai_threat/url_threat_seed.csv` chi dung cho smoke/fixture mode. Production retraining phai build canonical dataset tu nguon ngoai hoac feedback da duyet. Weak/generated/synthetic labels duoc ghi provenance nhung bi loai khoi primary training/evaluation mac dinh; chi include khi chay them `--include-weak-labels`.
+
+Thu muc du lieu AI threat:
+
+- `data/ai_threat/raw/`: file nguon local nhu PhishFuzzer JSON, Nazario mbox, SpamAssassin, Enron, PhishTank, URLhaus.
+- `data/ai_threat/canonical/`: CSV canonical dung de train production.
+- `data/ai_threat/manifests/`: manifest nguon, checksum, validation report, dataset version.
+- `data/ai_threat/feedback/`: export feedback da review/approve.
+- `data/ai_threat/fixtures/`: fixture nho cho smoke test.
+
+Build canonical dataset tu file local:
 
 ```bash
-python scripts\train_ai_threat_models.py
+python scripts\train_ai_threat_models.py --stage import ^
+  --phishfuzzer-json data\ai_threat\raw\phishfuzzer.json ^
+  --nazario-mbox data\ai_threat\raw\phishing-2025 ^
+  --spamassassin-path data\ai_threat\raw\spamassassin ^
+  --enron-maildir data\ai_threat\raw\enron ^
+  --phishtank-path data\ai_threat\raw\phishtank.csv ^
+  --urlhaus-path data\ai_threat\raw\urlhaus.csv
+```
+
+Train production tu canonical dataset:
+
+```bash
+python scripts\train_ai_threat_models.py --force
+```
+
+Publish artifact current sau khi pass publish gate:
+
+```bash
+python scripts\train_ai_threat_models.py --force --publish
+```
+
+Smoke test voi seed fixture:
+
+```bash
+python scripts\train_ai_threat_models.py --fixture-mode --force
 python scripts\smoke_ai_threat_models.py
 ```
 
 Pipeline nay train hai model sklearn:
 
-- Email threat classifier: du doan `Safe`, `Spam`, `Phishing`, `Malware Risk`, `Credential Theft`, `Payment Scam`, `Quishing`, `Business Email Compromise`.
+- Email threat classifier: du doan `Safe`, `Spam`, `Phishing`, `Malware Risk`, `Credential Theft`, `Payment Scam`, `Quishing`, `Business Email Compromise` tu canonical dataset co provenance.
 - URL phishing classifier: du doan URL benign/suspicious/phishing tu dac trung lexical/domain.
 
-Artifact duoc luu trong `outputs/<timestamp>_ai-threat/models/`. Cap nhat cac path sau trong `src/config/config.py` de ung dung dung AI model lam nguon risk chinh:
+Artifact duoc luu trong `outputs/<timestamp>_ai-threat/models/`. Khi publish gate pass, artifact duoc copy ve:
 
 ```python
-ai_threat_model_path = "outputs/<timestamp>_ai-threat/models/email_threat_model.pkl"
-ai_url_model_path = "outputs/<timestamp>_ai-threat/models/url_phishing_model.pkl"
+ai_threat_model_path = "outputs/ai-threat-current/models/email_threat_model.pkl"
+ai_url_model_path = "outputs/ai-threat-current/models/url_phishing_model.pkl"
 ```
 
 Neu cac artifact nay chua co, ung dung tra ve trang thai `model_unavailable` cho risk analysis va khong fallback ve rule-based analyzer. Cac helper cu chi duoc dung cho parsing, feature extraction hoac evidence display, khong phai nguon quyet dinh verdict/risk runtime.
