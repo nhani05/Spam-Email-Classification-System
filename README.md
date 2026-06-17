@@ -44,14 +44,25 @@ Hệ thống phân loại email spam/ham bằng Machine Learning, có giao diệ
 |-- notebooks/                     # Notebook thử nghiệm
 |-- scripts/                       # Smoke checks và tiện ích demo
 |-- src/
-|   |-- auth/                      # Đăng nhập, đăng ký, lưu và đọc lịch sử
-|   |-- components/                # Ingestion, transformation, training, dashboard
-|   |-- config/                    # Cấu hình đường dẫn dữ liệu/model
+|   |-- app/                       # Streamlit views, page handlers, formatting
+|   |-- auth/                      # Compatibility exports cho auth APIs cũ
+|   |-- components/                # Compatibility exports cho module cũ
+|   |-- core/                      # Cấu hình, logging, artifact path helpers
+|   |-- config/                    # Compatibility exports cho config cũ
+|   |-- data/                      # Email parsing và data helpers
 |   |-- database/                  # Kết nối MySQL
-|   |-- pipeline/                  # Training và prediction pipeline
-|   |-- security/                  # Phân tích URL, QR, email threat, campaign
+|   |-- ml/                        # Model lab, spam classifier, threat/url classifiers
+|   |-- persistence/               # Users, predictions, feedback, campaigns
+|   |-- pipeline/                  # Compatibility exports cho pipeline cũ
+|   |-- security/                  # Phân tích URL, QR, email indicators, campaign
+|   |-- workflows/                 # Prediction và training orchestration
 |   `-- utils/                     # Logger, email utils, state, DB helpers
 ```
+
+Chi tiết mapping refactor nằm ở `docs/PROJECT_STRUCTURE.md`. Các module cũ như
+`src.components.*`, `src.pipeline.*`, `src.security.ai_threat_model`,
+`src.auth.auth`, `src.config.config` và `src.utils.email_utils` vẫn được giữ làm
+compatibility shim để script, demo và artifact pickle hiện tại tiếp tục chạy.
 
 ## Yêu Cầu Môi Trường
 
@@ -117,6 +128,12 @@ feature_path = "data/models/v1/feature.pkl"
 ```
 
 Hoặc chạy lại pipeline huấn luyện để sinh model mới trong thư mục `outputs/`.
+
+Artifact hiện được phân loại như sau:
+
+- Bundled baseline artifacts: model/vectorizer có sẵn trong `data/models/v1/`.
+- Current runtime artifacts: các path đang được `Config` load, ví dụ `outputs/ai-threat-current/models/`.
+- Historical training runs: các lần train timestamp trong `outputs/<run-id>/`.
 
 ## Chạy Ứng Dụng
 

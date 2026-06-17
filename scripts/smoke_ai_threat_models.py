@@ -6,8 +6,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.config.config import Config
-from src.pipeline.prediction_pipeline import PredictionPipeline
-from src.security.ai_threat_model import AIThreatModelService, train_ai_threat_models
+from src.ml.threat_classifier import AIThreatModelService, train_ai_threat_models
+from src.workflows.prediction import PredictionPipeline
 from src.security.url_risk_model import URLRiskModel
 
 
@@ -38,6 +38,7 @@ def main() -> None:
     assert url_result["risk_score"] >= 35, "URL AI model should produce elevated risk"
 
     unavailable_pipeline = PredictionPipeline(load_models=False)
+    unavailable_pipeline.ai_threat_service = AIThreatModelService()
     unavailable = unavailable_pipeline.predict_single_email(
         "URGENT verify your bank password at http://secure-bank-login.xyz/reset"
     )

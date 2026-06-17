@@ -5,9 +5,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.pipeline.prediction_pipeline import PredictionPipeline
 from src.config.config import Config
-from src.security.ai_threat_model import AIThreatModelService, train_ai_threat_models
+from src.ml.threat_classifier import AIThreatModelService, train_ai_threat_models
+from src.workflows.prediction import PredictionPipeline
 from src.security.campaign_intelligence import CampaignIntelligenceEngine, CampaignSummary
 from src.security.feature_extractor import EmailFeatureExtractor
 
