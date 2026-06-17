@@ -1,3 +1,5 @@
+"""Model evaluation lab utilities and run discovery."""
+
 from src.ml.model_lab.evaluation import (
     ModelLabSummary,
     dataset_identity,

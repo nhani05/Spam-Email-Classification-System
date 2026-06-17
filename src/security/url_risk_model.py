@@ -106,7 +106,7 @@ class URLRiskModel:
         if self.ai_service is None:
             try:
                 from src.config.config import Config
-                from src.security.ai_threat_model import AIThreatModelService
+                from src.ml.threat_classifier.service import AIThreatModelService
 
                 config = Config()
                 self.ai_service = AIThreatModelService(url_model_path=config.ai_url_model_path)
