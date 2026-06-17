@@ -14,9 +14,10 @@ from src.security.url_risk_model import URLRiskModel
 def main() -> None:
     config = Config()
     metadata = train_ai_threat_models(
-        email_dataset_path=config.ai_threat_email_data_path,
-        url_dataset_path=config.ai_threat_url_data_path,
+        email_dataset_path=config.ai_threat_email_fixture_path,
+        url_dataset_path=config.ai_threat_url_fixture_path,
         output_base_dir=config.OUTPUT_BASE_DIR,
+        fixture_mode=True,
     )
     service = AIThreatModelService(
         email_model_path=metadata["artifact_paths"]["email_model_path"],
