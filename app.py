@@ -1,4 +1,4 @@
-﻿"""
+"""
 MailGuard AI - ung dung Streamlit.
 
 Quyen truy cap:
@@ -17,6 +17,9 @@ from src.app.pages import (
     _tab_single_email,
     _tab_url_phishing,
 )
+from src.components.email_summarizer import show_email_summarizer_tab
+from src.components.rag_chatbot import show_rag_chatbot_tab
+
 
 st.set_page_config(
     page_title="MailGuard AI",
@@ -43,13 +46,13 @@ def main() -> None:
 
     st.title("MailGuard AI")
     st.markdown(
-        "Há»‡ thá»‘ng phÃ¢n tÃ­ch an toÃ n email: phÃ¢n loáº¡i Spam/Ham, cháº¥m Ä‘iá»ƒm rá»§i ro, "
-        "phÃ¡t hiá»‡n phishing URL, QR/quishing vÃ  campaign táº¥n cÃ´ng."
+        "He thong phan tich an toan email: phan loai Spam/Ham, cham diem rui ro, "
+        "phat hien phishing URL, QR/quishing va campaign tan cong."
     )
 
     if st.session_state["logged_in"]:
-        tab_dashboard, tab_single, tab_batch, tab_history = st.tabs(
-            ["Báº£ng Ä‘iá»u khiá»ƒn", "Email Ä‘Æ¡n", "File MBOX", "Lá»‹ch sá»­"]
+        tab_dashboard, tab_single, tab_batch, tab_summary, tab_chatbot, tab_history = st.tabs(
+            ["Bang dieu khien", "Email don", "File MBOX", "Tom tat", "Chatbot", "Lich su"]
         )
 
         with tab_dashboard:
@@ -65,16 +68,28 @@ def main() -> None:
         with tab_batch:
             _tab_batch()
 
+        with tab_summary:
+            show_email_summarizer_tab()
+
+        with tab_chatbot:
+            show_rag_chatbot_tab()
+
         with tab_history:
             _tab_history()
     else:
-        tab_single, tab_batch = st.tabs(["Email Ä‘Æ¡n", "File MBOX (cáº§n Ä‘Äƒng nháº­p)"])
+        tab_single, tab_summary, tab_chatbot, tab_batch = st.tabs(
+            ["Email don", "Tom tat", "Chatbot", "File MBOX (can dang nhap)"]
+        )
         with tab_single:
             _tab_single_email()
             st.divider()
             _tab_url_phishing()
             st.divider()
             _tab_qr_image_security()
+        with tab_summary:
+            show_email_summarizer_tab()
+        with tab_chatbot:
+            show_rag_chatbot_tab()
         with tab_batch:
             _tab_batch()
 
