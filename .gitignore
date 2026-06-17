@@ -49,3 +49,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Local documentation notes
+docs/PROJECT_STRUCTURE_LOCAL.md
