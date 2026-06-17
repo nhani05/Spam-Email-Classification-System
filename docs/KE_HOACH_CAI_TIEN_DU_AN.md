@@ -87,7 +87,7 @@ Thay vì chỉ hiển thị `Spam` hoặc `Ham`, hệ thống cần hiển thị
 Tạo module:
 
 ```text
-src/security/risk_aggregator.py
+src/features/threat_intelligence/risk_aggregator.py
 ```
 
 Module này nhận kết quả từ ML model và các analyzer hiện có, sau đó tính điểm tổng hợp.

@@ -337,7 +337,7 @@ Không nên train live nếu thời gian demo ngắn, vì GridSearchCV có thể
 Training pipeline:
 
 ```bash
-python -m src.pipeline.training_pipeline
+python -m src.features.spam_classifier.training_pipeline
 ```
 
 Sau khi train, hệ thống sinh:

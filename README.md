@@ -33,24 +33,24 @@ Hệ thống phân loại email spam/ham bằng Machine Learning, có giao diệ
 |-- app.py                         # Ứng dụng Streamlit
 |-- requirements.txt               # Danh sách package Python
 |-- pyproject.toml                 # Cấu hình dự án khi dùng uv
-|-- data/
-|   |-- dataset/dataset.csv        # Dữ liệu huấn luyện
-|   `-- models/v1/                 # Model/vectorizer có sẵn
+|-- data/                          # Dataset/model versioned nếu cần fallback
 |-- database/
 |   |-- schema.sql                 # Script tạo database MySQL chính
-|   |-- legacy_schema.sql          # Schema MySQL phiên bản cũ
-|   `-- local/                     # SQLite local/runtime
 |-- docs/                          # Tài liệu dự án, demo, roadmap
 |-- notebooks/                     # Notebook thử nghiệm
 |-- scripts/                       # Smoke checks và tiện ích demo
 |-- src/
-|   |-- auth/                      # Đăng nhập, đăng ký, lưu và đọc lịch sử
-|   |-- components/                # Ingestion, transformation, training, dashboard
-|   |-- config/                    # Cấu hình đường dẫn dữ liệu/model
-|   |-- database/                  # Kết nối MySQL
-|   |-- pipeline/                  # Training và prediction pipeline
-|   |-- security/                  # Phân tích URL, QR, email threat, campaign
-|   `-- utils/                     # Logger, email utils, state, DB helpers
+|   |-- config/                    # Cau hinh duong dan du lieu/model
+|   |-- features/                  # Code chia theo tung tinh nang demo
+|   |   |-- auth/                  # Dang nhap, lich su, feedback
+|   |   |-- dashboard/             # Dashboard va Model Lab
+|   |   |-- email_summarizer/      # Tom tat email bang local AI
+|   |   |-- rag_chatbot/           # Chatbot hoi dap noi dung email
+|   |   |-- spam_classifier/       # Train/predict spam classifier
+|   |   `-- threat_intelligence/   # URL, QR, phishing, campaign, risk scoring
+|   |-- infrastructure/            # Adapter ha tang nhu database
+|   `-- shared/                    # Logger, email utils, state
+|-- outputs/                       # Model/runtime artifact local, bị ignore bởi Git
 ```
 
 ## Yêu Cầu Môi Trường
@@ -102,7 +102,7 @@ Nếu MySQL chưa sẵn sàng, ứng dụng vẫn có thể chạy chế độ k
 
 ## Cấu Hình Model
 
-Ứng dụng load model từ `src/config/config.py`:
+Ứng dụng load model từ `src/config/config.py`. Cấu hình hiện tự tìm thư mục `outputs/` mới nhất có đủ artifact spam classifier:
 
 ```python
 model_path = "outputs/2026-06-08_09-08-52/models/SVM_model.pkl"
@@ -141,7 +141,7 @@ data/dataset/dataset.csv
 Chạy pipeline huấn luyện:
 
 ```bash
-python -m src.pipeline.training_pipeline
+python -m src.features.spam_classifier.training_pipeline
 ```
 
 Pipeline sẽ:

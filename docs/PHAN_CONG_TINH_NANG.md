@@ -38,14 +38,14 @@ Tài liệu này phân chia các tính năng hiện có và các hướng nâng 
 
 | File | Nội dung phụ trách |
 | --- | --- |
-| `src/components/data_ingestion.py` | Đọc dataset huấn luyện |
-| `src/components/data_transformation.py` | Xử lý label, chia train/test, hybrid features |
-| `src/components/model_training.py` | Huấn luyện, đánh giá và lưu model |
-| `src/components/model_lab.py` | Model Lab, threshold analysis, error analysis |
-| `src/pipeline/training_pipeline.py` | Điều phối toàn bộ pipeline huấn luyện |
-| `src/pipeline/prediction_pipeline.py` | Dự đoán email đơn và file MBOX |
-| `src/utils/email_utils.py` | Tách nội dung email, làm sạch text, lấy người nhận |
-| `src/utils/state.py` | Quản lý state cho training/prediction |
+| `src/features/spam_classifier/data_ingestion.py` | Đọc dataset huấn luyện |
+| `src/features/spam_classifier/data_transformation.py` | Xử lý label, chia train/test, hybrid features |
+| `src/features/spam_classifier/model_training.py` | Huấn luyện, đánh giá và lưu model |
+| `src/features/spam_classifier/model_lab.py` | Model Lab, threshold analysis, error analysis |
+| `src/features/spam_classifier/training_pipeline.py` | Điều phối toàn bộ pipeline huấn luyện |
+| `src/features/spam_classifier/prediction_pipeline.py` | Dự đoán email đơn và file MBOX |
+| `src/shared/email_utils.py` | Tách nội dung email, làm sạch text, lấy người nhận |
+| `src/shared/state.py` | Quản lý state cho training/prediction |
 | `src/config/config.py` | Cấu hình đường dẫn dataset, model và vectorizer |
 | `data/dataset/dataset.csv` | Dữ liệu huấn luyện |
 | `data/models/v1/` | Model và vectorizer có sẵn |
@@ -55,7 +55,7 @@ Tài liệu này phân chia các tính năng hiện có và các hướng nâng 
 - Pipeline huấn luyện chạy được bằng lệnh:
 
 ```bash
-python -m src.pipeline.training_pipeline
+python -m src.features.spam_classifier.training_pipeline
 ```
 
 - Model và vectorizer được lưu đúng cấu trúc:
@@ -121,15 +121,15 @@ outputs/<timestamp>/observations/model_lab_metadata.json
 | File | Nội dung phụ trách |
 | --- | --- |
 | `app.py` | Giao diện Streamlit và điều phối các tab |
-| `src/auth/auth.py` | Đăng ký, đăng nhập, lưu và đọc lịch sử/feedback/review queue |
-| `src/database/db.py` | Kết nối MySQL và health check |
-| `src/components/dashboard.py` | Dashboard thống kê người dùng và bảo mật |
-| `src/security/email_threat_analyzer.py` | Phân tích rủi ro nội dung email |
-| `src/security/url_risk_model.py` | Chấm điểm rủi ro URL |
-| `src/security/qr_image_analyzer.py` | Đọc QR code từ ảnh và phân tích URL |
-| `src/security/feature_extractor.py` | Trích xuất đặc trưng email |
-| `src/security/threat_taxonomy.py` | Phân loại threat taxonomy |
-| `src/security/campaign_intelligence.py` | Campaign detection, graph data, report |
+| `src/features/auth/service.py` | Đăng ký, đăng nhập, lưu và đọc lịch sử/feedback/review queue |
+| `src/infrastructure/database/db.py` | Kết nối MySQL và health check |
+| `src/features/dashboard/ui.py` | Dashboard thống kê người dùng và bảo mật |
+| `src/features/threat_intelligence/email_threat_analyzer.py` | Phân tích rủi ro nội dung email |
+| `src/features/threat_intelligence/url_risk_model.py` | Chấm điểm rủi ro URL |
+| `src/features/threat_intelligence/qr_image_analyzer.py` | Đọc QR code từ ảnh và phân tích URL |
+| `src/features/threat_intelligence/feature_extractor.py` | Trích xuất đặc trưng email |
+| `src/features/threat_intelligence/threat_taxonomy.py` | Phân loại threat taxonomy |
+| `src/features/threat_intelligence/campaign_intelligence.py` | Campaign detection, graph data, report |
 | `database/schema.sql` | Script tạo database và dữ liệu mẫu |
 | `.env` | Biến môi trường kết nối database |
 
