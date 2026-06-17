@@ -186,10 +186,12 @@ Data -> Cleaning -> Feature -> Train -> Evaluate -> Save model -> App integratio
 - `src/ml/threat_classifier/canonical.py`: cleaning, normalization, validation, quarantine invalid rows va deduplication.
 - `src/ml/threat_classifier/lifecycle.py`: orchestrate import -> canonical -> train -> evaluate -> save -> publish.
 - `src/security/ai_threat_model.py`: compatibility path cho artifact loading va prediction.
+- `src/core/config.py`: current runtime path selection for baseline spam/ham and AI threat artifacts.
 - `data/ai_threat/email_threat_seed.csv`: fixture nho cho smoke test, khong phai production training source.
 - `data/ai_threat/url_threat_seed.csv`: fixture nho cho smoke test, khong phai production training source.
 - `scripts/train_ai_threat_models.py`: import canonical data, train, evaluate va publish model sau publish gate.
 - `scripts/smoke_ai_threat_models.py`: smoke check train/predict/model-unavailable behavior.
+- `scripts/smoke_email_threat_lifecycle.py`: end-to-end smoke cho import, canonical, training, publish gate, va feedback provenance.
 
 Production retraining phai dung canonical CSV trong `data/ai_threat/canonical/`, duoc build tu nguon ngoai hoac feedback da approve. Neu chi co seed/fixture data, command production se dung lai truoc khi train; fixture chi duoc phep khi chay `--fixture-mode`. Weak/generated/synthetic labels duoc dem rieng trong metadata va bi loai khoi primary training/evaluation mac dinh; chi include khi operator chay `--include-weak-labels`.
 

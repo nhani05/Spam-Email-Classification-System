@@ -10,7 +10,7 @@ This map records the target ownership boundaries for the project-structure refac
 | `src.core` | Configuration, path helpers, logging | `src.config.config` and `src.utils.logger` continue to import or delegate here. |
 | `src.data` | Email parsing, dataset loading, schema helpers | `src.utils.email_utils` remains import-compatible. |
 | `src.ml.spam_classifier` | Baseline spam/ham ingestion, transformation, training, inference helpers | `src.components.data_ingestion`, `src.components.data_transformation`, and `src.components.model_training` remain import-compatible. |
-| `src.ml.threat_classifier` | Email threat model service, training, features, datasets, labels, evaluation | `src.security.ai_threat_model` remains import-compatible for runtime and training APIs. |
+| `src.ml.threat_classifier` | Email threat model service, canonical data lifecycle, training, features, datasets, labels, evaluation, artifact metadata | `src.security.ai_threat_model` remains import-compatible for runtime and training APIs. |
 | `src.ml.url_classifier` | URL classifier features and label/verdict helpers | Existing URL analysis imports remain available through `src.security`. |
 | `src.ml.model_lab` | Model metrics, threshold reports, error analysis, run discovery | `src.components.model_lab` remains import-compatible. |
 | `src.security` | URL analysis, QR analysis, email indicators, campaign intelligence | Supervised model training moves out of this package. |

@@ -35,27 +35,25 @@ pip install -r requirements.txt
 
 ### 2.2 Kiểm Tra Model Path
 
-Ứng dụng đọc model trong `src/config/config.py`:
+Ứng dụng đọc model trong `src/core/config.py` qua `src/config/config.py`:
 
 ```python
-model_path = "outputs/2026-06-08_09-08-52/models/SVM_model.pkl"
-feature_path = "outputs/2026-06-08_09-08-52/models/vectorizer.pkl"
+model_path = "outputs/<latest_run>/models/SVM_model.pkl"
+feature_path = "outputs/<latest_run>/models/vectorizer.pkl"
 ```
 
-Nếu thư mục `outputs/...` không có, đổi về model có sẵn:
+Nếu thư mục `outputs/...` không có, ứng dụng tự fallback về model có sẵn:
 
 ```python
 model_path = "data/models/v1/model.pkl"
 feature_path = "data/models/v1/feature.pkl"
 ```
 
-Trong workspace hiện tại đã có model spam/ham theo path `outputs/2026-06-08_09-08-52/...`, nên không cần đổi nếu file vẫn tồn tại.
-
-Để demo risk analysis bằng AI threat model, cập nhật thêm:
+Để demo risk analysis bằng AI threat model, model current runtime dùng:
 
 ```python
-ai_threat_model_path = "outputs/2026-06-17_10-46-06_ai-threat/models/email_threat_model.pkl"
-ai_url_model_path = "outputs/2026-06-17_10-46-06_ai-threat/models/url_phishing_model.pkl"
+ai_threat_model_path = "outputs/ai-threat-current/models/email_threat_model.pkl"
+ai_url_model_path = "outputs/ai-threat-current/models/url_phishing_model.pkl"
 ```
 
 Nếu để hai path này rỗng, app vẫn chạy nhưng phần risk analysis sẽ hiển thị `model_unavailable` và không chấm điểm bằng rule.
@@ -67,6 +65,7 @@ Chạy:
 ```bash
 python -m compileall src app.py scripts
 python scripts\smoke_adaptive_threat_intelligence.py
+python scripts\smoke_email_threat_lifecycle.py
 ```
 
 Kết quả mong đợi:
@@ -487,7 +486,7 @@ Không nên train live nếu thời gian demo ngắn, vì GridSearchCV có thể
 Training pipeline:
 
 ```bash
-python -m src.pipeline.training_pipeline
+python -m src.pipeline.training_pipeline  # legacy spam/ham baseline
 ```
 
 Sau khi train, hệ thống sinh:
@@ -499,6 +498,13 @@ outputs/<timestamp>/observations/model_comparison_summary.csv
 outputs/<timestamp>/observations/threshold_analysis.csv
 outputs/<timestamp>/observations/error_analysis.json
 outputs/<timestamp>/observations/model_lab_metadata.json
+```
+
+Nếu bạn đang demo AI threat retraining, command tương ứng là:
+
+```bash
+python scripts\train_ai_threat_models.py --fixture-mode --force
+python scripts\train_ai_threat_models.py --force --publish
 ```
 
 ### Điểm Cần Nhấn Mạnh
@@ -631,6 +637,7 @@ Neu chi can smoke test nhanh voi fixture:
 ```bash
 python scripts\train_ai_threat_models.py --fixture-mode --force
 python scripts\smoke_ai_threat_models.py
+python scripts\smoke_email_threat_lifecycle.py
 ```
 
 Sau khi publish gate pass, app dung artifact current:

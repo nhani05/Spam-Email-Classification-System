@@ -10,3 +10,11 @@ This directory separates production training data from smoke-test fixtures.
 - `fixtures/`: tiny test fixtures.
 
 The files `email_threat_seed.csv` and `url_threat_seed.csv` are legacy smoke fixtures. Production retraining must use canonical data built from external or reviewed sources.
+
+Common commands:
+
+```bash
+python scripts\train_ai_threat_models.py --stage import --phishfuzzer-json data\ai_threat\raw\phishfuzzer.json
+python scripts\train_ai_threat_models.py --fixture-mode --force
+python scripts\train_ai_threat_models.py --force --publish
+```

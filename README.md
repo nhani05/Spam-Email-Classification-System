@@ -113,21 +113,21 @@ Nếu MySQL chưa sẵn sàng, ứng dụng vẫn có thể chạy chế độ k
 
 ## Cấu Hình Model
 
-Ứng dụng load model từ `src/config/config.py`:
+Ứng dụng load model từ `src/core/config.py` thông qua compatibility export `src/config/config.py`:
 
 ```python
-model_path = "outputs/2026-06-08_09-08-52/models/SVM_model.pkl"
-feature_path = "outputs/2026-06-08_09-08-52/models/vectorizer.pkl"
+model_path = "outputs/<latest_run>/models/SVM_model.pkl"
+feature_path = "outputs/<latest_run>/models/vectorizer.pkl"
 ```
 
-Nếu thư mục `outputs/...` không tồn tại, cập nhật về model có sẵn trong repo:
+Nếu thư mục `outputs/...` không tồn tại, ứng dụng tự fallback về model có sẵn trong repo:
 
 ```python
 model_path = "data/models/v1/model.pkl"
 feature_path = "data/models/v1/feature.pkl"
 ```
 
-Hoặc chạy lại pipeline huấn luyện để sinh model mới trong thư mục `outputs/`.
+Hoặc chạy lại pipeline huấn luyện để sinh model mới trong thư mục `outputs/`. Đường dẫn `model_path` và `feature_path` mặc định sẽ tự trỏ tới thư mục `outputs` mới nhất mà không cần sửa tay.
 
 Artifact hiện được phân loại như sau:
 
@@ -147,7 +147,7 @@ Sau khi chạy, mở đường dẫn Streamlit hiển thị trên terminal, thư
 http://localhost:8501
 ```
 
-## Huấn Luyện Lại Model
+## Huấn Luyện Lại Model Spam/Ham
 
 Dataset mặc định nằm tại:
 
@@ -155,10 +155,10 @@ Dataset mặc định nằm tại:
 data/dataset/dataset.csv
 ```
 
-Chạy pipeline huấn luyện:
+Chạy pipeline huấn luyện legacy compatibility cho spam/ham baseline:
 
 ```bash
-python -m src.pipeline.training_pipeline
+python -m src.pipeline.training_pipeline  # legacy spam/ham baseline
 ```
 
 Pipeline sẽ:
@@ -169,6 +169,13 @@ Pipeline sẽ:
 4. Vector hóa nội dung email bằng hybrid feature pipeline: word TF-IDF, character n-gram TF-IDF và numeric security features.
 5. Huấn luyện và tìm tham số tốt nhất cho nhiều mô hình.
 6. Lưu model, vectorizer, metadata và báo cáo metric vào `outputs/<timestamp>/`.
+
+Nếu muốn huấn luyện lại AI threat models mới, dùng command riêng:
+
+```bash
+python scripts\train_ai_threat_models.py --fixture-mode --force
+python scripts\train_ai_threat_models.py --force --publish
+```
 
 Sau khi huấn luyện, cập nhật `model_path` và `feature_path` trong `src/config/config.py` để trỏ tới model mới.
 
@@ -202,6 +209,7 @@ Hướng này biến mỗi email thành một security event có cấu trúc:
 ```bash
 python -m compileall src app.py scripts
 python scripts\smoke_adaptive_threat_intelligence.py
+python scripts\smoke_email_threat_lifecycle.py
 ```
 
 Kết quả mong đợi:
@@ -212,8 +220,9 @@ adaptive threat intelligence smoke passed
 
 ## Tài Liệu Dự Án
 
-- `docs/HUONG_DAN_DEMO_DU_AN.md`: Kịch bản demo chi tiết, input mẫu, kết quả mong đợi và cách trả lời câu hỏi.
+- `docs/DEMO.md`: Kịch bản demo chi tiết, input mẫu, kết quả mong đợi và cách trả lời câu hỏi.
 - `docs/ADAPTIVE_THREAT_INTELLIGENCE.md`: Tài liệu kiến trúc Adaptive Threat Intelligence Platform.
+- `docs/PROJECT_STRUCTURE.md`: Bản đồ cấu trúc thư mục và ownership module.
 - `docs/KE_HOACH_CAI_TIEN_DU_AN.md`: Roadmap nâng cấp dự án thành MailGuard AI.
 - `docs/PHAN_CONG_TINH_NANG.md`: Phân công tính năng cho hai thành viên.
 
@@ -277,7 +286,7 @@ Pipeline nay train hai model sklearn:
 - Email threat classifier: du doan `Safe`, `Spam`, `Phishing`, `Malware Risk`, `Credential Theft`, `Payment Scam`, `Quishing`, `Business Email Compromise` tu canonical dataset co provenance.
 - URL phishing classifier: du doan URL benign/suspicious/phishing tu dac trung lexical/domain.
 
-Artifact duoc luu trong `outputs/<timestamp>_ai-threat/models/`. Khi publish gate pass, artifact duoc copy ve:
+Artifact duoc luu trong `outputs/<run-id>_ai-threat/models/`. Khi publish gate pass, artifact duoc copy ve:
 
 ```python
 ai_threat_model_path = "outputs/ai-threat-current/models/email_threat_model.pkl"
@@ -285,3 +294,9 @@ ai_url_model_path = "outputs/ai-threat-current/models/url_phishing_model.pkl"
 ```
 
 Neu cac artifact nay chua co, ung dung tra ve trang thai `model_unavailable` cho risk analysis va khong fallback ve rule-based analyzer. Cac helper cu chi duoc dung cho parsing, feature extraction hoac evidence display, khong phai nguon quyet dinh verdict/risk runtime.
+
+File smoke nhanh cho lifecycle moi:
+
+```bash
+python scripts\smoke_email_threat_lifecycle.py
+```
