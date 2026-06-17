@@ -1,4 +1,0 @@
-interface:
-  display_name: "MailGuard Fix"
-  short_description: "Debug and fix MailGuard AI defects"
-  default_prompt: "Use $mailguard-fix to investigate and fix a MailGuard AI bug."

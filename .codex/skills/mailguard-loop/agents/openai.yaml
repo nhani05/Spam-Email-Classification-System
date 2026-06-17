@@ -1,4 +1,0 @@
-interface:
-  display_name: "MailGuard Loop"
-  short_description: "Iterate with focused checks until verified"
-  default_prompt: "Use $mailguard-loop to run a build-test-improve loop."

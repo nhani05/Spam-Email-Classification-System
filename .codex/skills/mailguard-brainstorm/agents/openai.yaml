@@ -1,4 +1,0 @@
-interface:
-  display_name: "MailGuard Brainstorm"
-  short_description: "Ideate MailGuard AI features and directions"
-  default_prompt: "Use $mailguard-brainstorm to propose practical feature ideas for MailGuard AI."

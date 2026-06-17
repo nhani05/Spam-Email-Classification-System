@@ -1,4 +1,0 @@
-interface:
-  display_name: "MailGuard Docs"
-  short_description: "Write accurate MailGuard AI project docs"
-  default_prompt: "Use $mailguard-docs to update MailGuard AI documentation."
