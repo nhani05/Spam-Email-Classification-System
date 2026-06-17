@@ -118,8 +118,6 @@ def show_email_summarizer_tab():
         st.error("⚠️ Bạn cần cài đặt thư viện để chạy tính năng này. Mở terminal và chạy lệnh:\n\n`pip install transformers torch sentencepiece`")
         return
         
-    st.info("💡 Bạn đang sử dụng mô hình AI 'nhà trồng' được huấn luyện cục bộ. Không cần tải thêm gì từ Internet.")
-
     st.subheader("Nhập dữ liệu")
     input_type = st.radio("Chọn cách nhập dữ liệu", ["Nhập văn bản (Paste nội dung)", "Tải lên file MBOX"], horizontal=True, key="summarizer_input_type")
     combined_text = ""

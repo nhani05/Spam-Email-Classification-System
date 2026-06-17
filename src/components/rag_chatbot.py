@@ -8,9 +8,29 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.prompts import PromptTemplate
 from langchain_community.llms.huggingface_pipeline import HuggingFacePipeline
-from transformers import pipeline
+from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+import torch
 
-from src.components.email_summarizer import load_local_summarizer
+
+@st.cache_resource
+def load_chat_model():
+    """Tải mô hình ngôn ngữ lớn chuyên biệt cho Chatbot (Qwen2.5)"""
+    # Dùng Qwen2.5 0.5B: Siêu nhẹ (~1GB) nhưng cực kỳ thông minh trong việc hỏi đáp và logic
+    model_name = "Qwen/Qwen2.5-0.5B-Instruct"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
+    
+    pipe = pipeline(
+        "text-generation", 
+        model=model, 
+        tokenizer=tokenizer, 
+        max_new_tokens=512, 
+        device=0 if device == "cuda" else -1,
+        return_full_text=False # Rất quan trọng để AI không lặp lại câu hỏi
+    )
+    return pipe
 
 @st.cache_resource
 def get_embedding_model():
@@ -82,21 +102,17 @@ def show_rag_chatbot_tab():
                 st.session_state.rag_file_name = uploaded_file.name
                 
                 # Khởi tạo mô hình và chuỗi hỏi đáp thủ công (bỏ qua langchain.chains bị lỗi)
-                tokenizer, model, device = load_local_summarizer()
-                pipe = pipeline(
-                    "text-generation", model=model, tokenizer=tokenizer, max_new_tokens=256, device=device
-                )
+                pipe = load_chat_model()
                 st.session_state.llm = HuggingFacePipeline(pipeline=pipe)
                 
-                prompt_template = """Bạn là một trợ lý AI thông minh, có khả năng đọc và hiểu hàng ngàn email.
-Dựa vào các thông tin trong email được cung cấp, hãy trả lời câu hỏi của người dùng một cách ngắn gọn và chính xác.
-Nếu không tìm thấy thông tin, hãy trả lời "Tôi không tìm thấy thông tin về điều này trong các email đã cung cấp."
+                prompt_template = """<|im_start|>system
+Bạn là một trợ lý AI thông minh. Hãy đọc kỹ thông tin email được cung cấp và trả lời câu hỏi của người dùng. Nếu được yêu cầu thống kê hoặc đếm số lượng, hãy đếm thật cẩn thận và đưa ra con số chính xác.<|im_end|>
+<|im_start|>user
 
 Thông tin email: {context}
 
-Câu hỏi: {question}
-
-Trả lời:
+Câu hỏi: {question}<|im_end|>
+<|im_start|>assistant
 """
                 st.session_state.qa_prompt = PromptTemplate.from_template(prompt_template)
                 
