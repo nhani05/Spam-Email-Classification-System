@@ -1,4 +1,4 @@
-# Hướng Dẫn Demo Dự Án MailGuard AI
+﻿# Hướng Dẫn Demo Dự Án MailGuard AI
 
 Tài liệu này dùng để demo dự án trước giảng viên hoặc hội đồng. Mục tiêu là trình bày dự án không chỉ là một spam/ham classifier, mà là một hệ thống phân tích an toàn email: risk score, threat taxonomy, URL phishing, QR/quishing, campaign detection, dashboard, feedback loop và model lab.
 
@@ -49,6 +49,17 @@ model_path = "data/models/v1/model.pkl"
 feature_path = "data/models/v1/feature.pkl"
 ```
 
+Trong workspace hiện tại đã có model spam/ham theo path `outputs/2026-06-08_09-08-52/...`, nên không cần đổi nếu file vẫn tồn tại.
+
+Để demo risk analysis bằng AI threat model, cập nhật thêm:
+
+```python
+ai_threat_model_path = "outputs/2026-06-17_10-46-06_ai-threat/models/email_threat_model.pkl"
+ai_url_model_path = "outputs/2026-06-17_10-46-06_ai-threat/models/url_phishing_model.pkl"
+```
+
+Nếu để hai path này rỗng, app vẫn chạy nhưng phần risk analysis sẽ hiển thị `model_unavailable` và không chấm điểm bằng rule.
+
 ### 2.3 Kiểm Tra Nhanh Trước Giờ Demo
 
 Chạy:
@@ -96,6 +107,145 @@ Mở:
 http://localhost:8501
 ```
 
+### 2.6 Input Chuẩn Bị Sẵn Trước Khi Demo
+
+Mở sẵn file này và copy theo từng khối khi demo. Bộ input dưới đây được chọn để tạo đủ tín hiệu: email an toàn, phishing, credential theft, BEC/payment scam, URL rủi ro, QR/quishing và MBOX campaign.
+
+#### Tài Khoản Demo
+
+Nếu đã chạy `mysql -u root -p < database/schema.sql`, database có sẵn user mẫu:
+
+```text
+alice / pass123
+bob / qwerty12
+charlie / charlie99
+```
+
+Nếu đăng nhập bằng user mẫu không được do môi trường hash mật khẩu khác, dùng form `Đăng ký` ở sidebar để tạo user mới, sau đó đăng nhập bằng user vừa tạo.
+
+#### Email Safe - Copy Vào `Email đơn`
+
+```text
+Subject: Project report review
+
+Hi team,
+
+Please review the project report before our meeting tomorrow morning.
+I updated the dashboard screenshots and added the latest notes from the model evaluation run.
+
+Thanks,
+Minh
+```
+
+#### Email Phishing/Credential Theft - Copy Vào `Email đơn`
+
+```text
+Subject: URGENT: Your PayPal account has been suspended
+
+We detected unusual login activity on your PayPal account.
+Verify your password immediately at:
+http://paypa1-login.xyz/reset
+
+If you do not verify within 24 hours, your account will be permanently locked.
+```
+
+#### Email Malware Risk - Copy Vào `Email đơn`
+
+```text
+Subject: Invoice payment overdue
+
+Please open the attached invoice_update.exe and enable macros to view the full payment details.
+Your account will be charged a late fee today if this invoice is not confirmed.
+
+Download mirror:
+http://invoice-secure-update.ru/download
+```
+
+#### Email Business Email Compromise / Payment Scam - Copy Vào `Email đơn`
+
+```text
+Subject: Urgent supplier payment change
+
+Hi Finance team,
+
+I am in a meeting and cannot call. Please update the supplier bank account and send the pending payment today.
+Use this new account for the wire transfer and keep this request confidential until I return.
+
+Regards,
+CEO Office
+```
+
+#### URL Demo - Copy Vào `Phân tích URL phishing`
+
+```text
+https://google.com
+https://mail.google.com
+http://paypa1-login.xyz/verify?account=locked
+https://bit.ly/free-gift-login
+http://192.168.1.10/login
+http://invoice-secure-update.ru/download
+https://secure-microsoft-login.example.com/verify-password
+```
+
+#### QR/Quishing Payload
+
+Tạo trước một ảnh QR chứa payload này:
+
+```text
+http://paypa1-login.xyz/verify?source=qr
+```
+
+Nếu cần tạo nhanh QR bằng Python:
+
+```bash
+python -m pip install qrcode[pil]
+python -c "import qrcode; qrcode.make('http://paypa1-login.xyz/verify?source=qr').save('demo_quishing_qr.png')"
+```
+
+Upload `demo_quishing_qr.png` vào mục `Phân tích QR / Quishing`.
+
+#### MBOX Demo Campaign - Nội Dung File Mẫu
+
+Tạo file `demo_campaign.mbox` ở máy demo với nội dung sau, sau đó upload vào tab `File MBOX`. Các email dùng chung domain/link và ngôn ngữ khẩn cấp để tăng khả năng gom thành một campaign.
+
+```text
+From attacker1@paypa1-login.xyz Sat Jan 20 10:00:00 2026
+Date: Sat, 20 Jan 2026 10:00:00 +0700
+From: PayPal Security <attacker1@paypa1-login.xyz>
+To: victim@example.com
+Subject: URGENT: PayPal account verification required
+
+Your PayPal account has been limited. Verify your login immediately:
+http://paypa1-login.xyz/verify
+
+From attacker2@paypa1-login.xyz Sat Jan 20 10:04:00 2026
+Date: Sat, 20 Jan 2026 10:04:00 +0700
+From: PayPal Support <attacker2@paypa1-login.xyz>
+To: victim2@example.com
+Subject: PayPal password reset required
+
+We detected suspicious activity. Reset your password now:
+http://paypa1-login.xyz/reset
+
+From attacker3@paypa1-login.xyz Sat Jan 20 10:08:00 2026
+Date: Sat, 20 Jan 2026 10:08:00 +0700
+From: PayPal Alert <attacker3@paypa1-login.xyz>
+To: victim3@example.com
+Subject: Final warning: PayPal wallet locked
+
+Your wallet will be locked within 24 hours. Confirm your account:
+http://paypa1-login.xyz/confirm
+
+From colleague@example.com Sat Jan 20 10:12:00 2026
+Date: Sat, 20 Jan 2026 10:12:00 +0700
+From: Project Team <colleague@example.com>
+To: victim4@example.com
+Subject: Meeting notes
+
+Hi, attached are the discussion points for tomorrow's project meeting.
+No action is required before the meeting.
+```
+
 ## 3. Luồng Demo Tổng Thể
 
 Nên demo theo thứ tự:
@@ -141,7 +291,7 @@ Thanks.
 
 ```text
 Với email công việc bình thường, model phân loại là Ham.
-Risk aggregator kết hợp ML và rule-based analyzer nên kết quả cuối cùng là Low risk.
+Spam/ham model vẫn chạy riêng; threat-risk layer chỉ kết luận khi AI threat model đã được cấu hình.
 Hệ thống không chỉ hiện Ham/Spam mà còn hiện risk score, threat label và lý do.
 ```
 
@@ -175,7 +325,7 @@ If you do not verify within 24 hours, your account will be permanently locked.
 
 ```text
 Email này có nhiều dấu hiệu tấn công: yêu cầu xác minh mật khẩu, tạo áp lực thời gian và chứa link đáng nghi.
-Hệ thống dùng ML để dự đoán spam, sau đó dùng rule-based threat analyzer để chấm phishing, fake link, malware.
+Hệ thống dùng ML để dự đoán spam/ham, sau đó dùng AI threat model riêng để chấm phishing, fake link, malware-risk và các nhãn threat khác.
 Risk aggregator hợp nhất các tín hiệu này thành final verdict và recommended actions.
 ```
 
@@ -385,7 +535,7 @@ Hệ thống đã thiết kế model lab nên sau này có thể thêm Transform
 Trả lời:
 
 ```text
-Risk aggregator xử lý trường hợp model-rule conflict.
+Nếu thiếu artifact AI threat model, hệ thống trả `model_unavailable` để tránh dùng rule làm verdict thay thế.
 Nếu ML báo Ham nhưng URL/QR/malware signal cao, risk score vẫn được đẩy lên và case có thể vào review queue.
 ```
 
@@ -460,3 +610,21 @@ Kết quả cuối cùng là MailGuard AI - một hệ thống phân tích an to
 Dự án vẫn có nền tảng ML spam classification, nhưng được nâng cấp thêm risk scoring, explainability, URL/QR phishing detection, campaign intelligence, dashboard và adaptive feedback learning.
 Hướng phát triển tiếp theo là bổ sung dữ liệu phishing thật, thêm header authentication SPF/DKIM/DMARC và benchmark Transformer trong Model Lab.
 ```
+
+## AI Risk Model Demo Note
+
+Neu muon demo risk analysis la AI/ML that, chay:
+
+```bash
+python scripts\train_ai_threat_models.py
+python scripts\smoke_ai_threat_models.py
+```
+
+Sau khi train, copy hai path artifact in ra terminal vao `src/config/config.py`:
+
+```python
+ai_threat_model_path = "outputs/<timestamp>_ai-threat/models/email_threat_model.pkl"
+ai_url_model_path = "outputs/<timestamp>_ai-threat/models/url_phishing_model.pkl"
+```
+
+Khi duoc hoi, giai thich ngan gon: spam/ham model van duoc giu, nhung threat/risk layer dung supervised AI model rieng. Neu artifact AI chua duoc cau hinh, he thong hien `model_unavailable` va khong fallback sang rule-based scoring.

@@ -1,4 +1,4 @@
-# Nền Tảng Adaptive Threat Intelligence
+﻿# Nền Tảng Adaptive Threat Intelligence
 
 ## Tổng Quan
 
@@ -172,3 +172,15 @@ python scripts/smoke_adaptive_threat_intelligence.py
 - Transformer-based language model chưa nằm trong phạm vi triển khai đầu tiên.
 - Campaign clustering đang dùng scoring xác định và dễ giải thích, nhưng threshold có thể cần tinh chỉnh khi mailbox lớn hơn.
 - Feedback được lưu để review trước khi dùng cho retraining nhằm giảm rủi ro poisoning.
+
+## AI Threat Risk Model
+
+Tang risk analysis moi su dung supervised ML thay vi chi dua vao diem rule co dinh.
+
+- `src/security/ai_threat_model.py`: schema dataset, feature builders, training, evaluation, artifact loading va prediction.
+- `data/ai_threat/email_threat_seed.csv`: seed dataset cho email threat labels.
+- `data/ai_threat/url_threat_seed.csv`: seed dataset cho URL phishing labels.
+- `scripts/train_ai_threat_models.py`: train email threat classifier va URL phishing classifier.
+- `scripts/smoke_ai_threat_models.py`: smoke check train/predict/model-unavailable behavior.
+
+Khi `ai_threat_model_path` va `ai_url_model_path` trong `src/config/config.py` tro den artifact hop le, prediction pipeline dung AI model lam nguon duy nhat cho `threat_label`, `class_scores`, `risk_score`, `risk_level` va `verdict`. Neu artifact khong ton tai, pipeline tra `model_unavailable` va khong fallback sang rule-based scoring.

@@ -1,4 +1,4 @@
-# Spam Email Classification System
+﻿# Spam Email Classification System
 
 Hệ thống phân loại email spam/ham bằng Machine Learning, có giao diện Streamlit để kiểm tra email đơn, xử lý file MBOX, phân tích rủi ro URL/QR, lưu lịch sử theo tài khoản người dùng và hỗ trợ các tính năng nâng cấp theo hướng MailGuard AI.
 
@@ -174,7 +174,7 @@ MailGuard AI: Adaptive Email Threat Intelligence Platform
 
 Hướng này biến mỗi email thành một security event có cấu trúc:
 
-- Hybrid threat modeling: kết hợp TF-IDF word/char n-gram, numeric security features, URL, QR, attachment và rule score.
+- AI-only threat modeling: kết hợp TF-IDF word/char n-gram, numeric security features, URL, QR và attachment features; runtime verdict/risk không dùng rule score.
 - Threat taxonomy: Safe, Spam, Phishing, Malware Risk, Business Email Compromise, Quishing, Credential Theft, Payment Scam.
 - Model Evaluation Lab: metadata cho mỗi lần train, per-class metrics, macro/weighted F1, confusion matrix, threshold analysis và error analysis.
 - Campaign Threat Intelligence: gom nhóm email nguy hiểm thành phishing/scam campaign, tạo graph-ready nodes/edges và xuất report.
@@ -205,3 +205,26 @@ adaptive threat intelligence smoke passed
 - File `.env`, `outputs/`, `venv/`, log và file MBOX được bỏ qua trong `.gitignore`.
 - Mật khẩu được hash trong logic ứng dụng nếu có `bcrypt`; nếu thiếu `bcrypt`, hệ thống fallback SHA-256 chỉ phù hợp cho môi trường phát triển.
 - Nếu lỗi load model xảy ra khi mở app, hãy kiểm tra lại `model_path` và `feature_path`.
+
+## AI Threat Risk Model
+
+Du an co them pipeline AI/ML rieng cho risk analysis:
+
+```bash
+python scripts\train_ai_threat_models.py
+python scripts\smoke_ai_threat_models.py
+```
+
+Pipeline nay train hai model sklearn:
+
+- Email threat classifier: du doan `Safe`, `Spam`, `Phishing`, `Malware Risk`, `Credential Theft`, `Payment Scam`, `Quishing`, `Business Email Compromise`.
+- URL phishing classifier: du doan URL benign/suspicious/phishing tu dac trung lexical/domain.
+
+Artifact duoc luu trong `outputs/<timestamp>_ai-threat/models/`. Cap nhat cac path sau trong `src/config/config.py` de ung dung dung AI model lam nguon risk chinh:
+
+```python
+ai_threat_model_path = "outputs/<timestamp>_ai-threat/models/email_threat_model.pkl"
+ai_url_model_path = "outputs/<timestamp>_ai-threat/models/url_phishing_model.pkl"
+```
+
+Neu cac artifact nay chua co, ung dung tra ve trang thai `model_unavailable` cho risk analysis va khong fallback ve rule-based analyzer. Cac helper cu chi duoc dung cho parsing, feature extraction hoac evidence display, khong phai nguon quyet dinh verdict/risk runtime.
