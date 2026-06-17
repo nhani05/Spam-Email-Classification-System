@@ -2,18 +2,20 @@
 
 __all__ = [
     "CampaignIntelligenceEngine",
+    "AIThreatModelService",
     "EmailFeatureExtractor",
     "EmailFeatureRecord",
     "EmailThreatAnalyzer",
     "QRImageAnalyzer",
-    "RiskAggregator",
-    "RiskAnalysisResult",
-    "ThreatTaxonomyClassifier",
     "URLRiskModel",
 ]
 
 
 def __getattr__(name: str):
+    if name == "AIThreatModelService":
+        from .ai_threat_model import AIThreatModelService
+
+        return AIThreatModelService
     if name == "EmailThreatAnalyzer":
         from .email_threat_analyzer import EmailThreatAnalyzer
 
@@ -26,14 +28,6 @@ def __getattr__(name: str):
         from .campaign_intelligence import CampaignIntelligenceEngine
 
         return CampaignIntelligenceEngine
-    if name == "ThreatTaxonomyClassifier":
-        from .threat_taxonomy import ThreatTaxonomyClassifier
-
-        return ThreatTaxonomyClassifier
-    if name in {"RiskAggregator", "RiskAnalysisResult"}:
-        from .risk_aggregator import RiskAggregator, RiskAnalysisResult
-
-        return {"RiskAggregator": RiskAggregator, "RiskAnalysisResult": RiskAnalysisResult}[name]
     if name == "QRImageAnalyzer":
         from .qr_image_analyzer import QRImageAnalyzer
 
