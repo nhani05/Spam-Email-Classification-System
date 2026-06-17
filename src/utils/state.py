@@ -12,6 +12,8 @@ class TrainingState:
     X_train_tfidf: Optional[Any] = None
     X_test_tfidf: Optional[Any] = None
     tfidf_vectorizer: Optional[Any] = None
+    threat_labels: Optional[pd.Series] = None
+    feature_config: Optional[Dict[str, Any]] = None
     trained_models: Optional[Dict[str, Any]] = None
     model_metrics: Optional[Dict[str, Dict[str, float]]] = None
     best_model_name: Optional[str] = None

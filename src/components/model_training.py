@@ -18,6 +18,14 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from src.utils.logger import get_logger
 from src.utils.state import TrainingState
 from src.config.config import Config, ModelConfig
+from src.components.model_lab import (
+    dataset_identity,
+    error_analysis,
+    evaluate_predictions,
+    save_model_lab_artifacts,
+    threshold_report,
+)
+from src.security.email_threat_analyzer import EmailThreatAnalyzer
 
 logger = get_logger(__name__)
 
@@ -54,7 +62,10 @@ class ModelTraining:
                 'all_models': ', '.join(list(state.trained_models.keys())),
                 'tfidf_features': state.X_train_tfidf.shape[1],
                 'train_samples': len(state.y_train),
-                'test_samples': len(state.y_test)
+                'test_samples': len(state.y_test),
+                'dataset_identity': dataset_identity(self.config.training_data_path),
+                'feature_config': json.dumps(state.feature_config or {}, ensure_ascii=False),
+                'taxonomy': json.dumps({"0": "Spam", "1": "Safe"}, ensure_ascii=False),
             }
             
             metadata_path = os.path.join(observations_dir, "model_metadata.csv")
@@ -244,6 +255,7 @@ class ModelTraining:
             
             output_dir = self.save_pickle_files(state)
             self.save_metrics_to_csv(state, output_dir)
+            self.save_model_lab_outputs(state, output_dir)
             logger.info("\nModel training completed successfully")
             logger.info(f"All outputs saved to: {output_dir}/")
             return state
@@ -251,3 +263,64 @@ class ModelTraining:
         except Exception as e:
             logger.error(f"Failed to train models: {str(e)}")
             raise e
+
+    def save_model_lab_outputs(self, state: TrainingState, output_dir: str):
+        observations_dir = os.path.join(output_dir, "observations")
+        os.makedirs(observations_dir, exist_ok=True)
+        analyzer = EmailThreatAnalyzer()
+
+        best_model = state.best_model
+        y_pred = best_model.predict(state.X_test_tfidf)
+        y_score = None
+        confidences = []
+        if hasattr(best_model, "predict_proba"):
+            try:
+                probabilities = best_model.predict_proba(state.X_test_tfidf)
+                # Label 0 is spam in the existing project. Use spam probability for risk sensitivity.
+                y_score = probabilities[:, 0].tolist()
+                confidences = (probabilities.max(axis=1) * 100).tolist()
+            except Exception:
+                y_score = None
+        if not confidences:
+            confidences = [None] * len(y_pred)
+
+        # Convert current labels so positive class means malicious/spam for threshold reports.
+        y_true_spam = [1 if int(value) == 0 else 0 for value in state.y_test]
+        y_pred_spam = [1 if int(value) == 0 else 0 for value in y_pred]
+        spam_scores = y_score if y_score is not None else [1.0 if value == 1 else 0.0 for value in y_pred_spam]
+        indicators = []
+        for text in state.X_test:
+            threat = analyzer.analyze(str(text)).to_dict()
+            indicators.append({
+                "risk_score": threat.get("risk_score", 0),
+                "urls": threat.get("urls", []),
+                "risky_files": threat.get("risky_files", []),
+            })
+
+        lab_metrics = evaluate_predictions(y_true_spam, y_pred_spam, spam_scores)
+        thresholds = threshold_report(y_true_spam, spam_scores)
+        errors = error_analysis(state.X_test, y_true_spam, y_pred_spam, confidences, indicators)
+
+        pd.DataFrame(thresholds).to_csv(os.path.join(observations_dir, "threshold_analysis.csv"), index=False)
+        with open(os.path.join(observations_dir, "error_analysis.json"), "w", encoding="utf-8") as f:
+            json.dump(errors, f, indent=2, ensure_ascii=False, default=str)
+
+        metadata = {
+            "run_id": os.path.basename(output_dir),
+            "best_model_name": state.best_model_name,
+            "dataset_identity": dataset_identity(self.config.training_data_path),
+            "feature_config": state.feature_config or {},
+            "taxonomy": {"0": "Spam", "1": "Safe"},
+            "best_metrics": lab_metrics,
+            "thresholds": thresholds,
+            "calibration": {
+                "method": "native_predict_proba" if hasattr(best_model, "predict_proba") else "unavailable",
+                "selected_profile": "balanced",
+                "selected_threshold": 0.5,
+            },
+            "artifact_paths": {
+                "output_dir": output_dir,
+                "observations_dir": observations_dir,
+            },
+        }
+        save_model_lab_artifacts(output_dir, metadata)
