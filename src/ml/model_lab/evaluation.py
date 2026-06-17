@@ -166,13 +166,22 @@ def discover_model_runs(outputs_dir: str = "outputs") -> pd.DataFrame:
             data = json.loads(metadata_path.read_text(encoding="utf-8"))
         except Exception:
             continue
+        lifecycle = data.get("dataset_lifecycle", {})
+        email_lifecycle = lifecycle.get("email", {}) if isinstance(lifecycle, dict) else {}
         rows.append({
             "run_id": metadata_path.parents[1].name,
             "model_name": data.get("best_model_name", ""),
             "dataset_identity": data.get("dataset_identity", ""),
+            "artifact_schema_version": data.get("artifact_schema_version", ""),
+            "email_rows": email_lifecycle.get("row_count", ""),
+            "email_source_counts": email_lifecycle.get("source_counts", ""),
+            "email_label_counts": email_lifecycle.get("label_counts", ""),
+            "weak_label_count": email_lifecycle.get("weak_label_count", ""),
             "feature_config": data.get("feature_config", ""),
             "macro_f1": data.get("best_metrics", {}).get("macro_f1", ""),
+            "email_macro_f1": data.get("best_metrics", {}).get("email_macro_f1", ""),
             "weighted_f1": data.get("best_metrics", {}).get("weighted_f1", ""),
+            "email_weighted_f1": data.get("best_metrics", {}).get("email_weighted_f1", ""),
             "path": str(metadata_path.parents[1]),
         })
     return pd.DataFrame(rows)

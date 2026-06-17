@@ -23,6 +23,7 @@ from sklearn.pipeline import FeatureUnion, Pipeline
 from src.ml.model_lab import dataset_identity, evaluate_predictions, threshold_report
 from src.utils.logger import get_logger
 from src.security.url_risk_model import BRAND_DOMAINS, HIGH_RISK_TLDS, SHORTENER_DOMAINS, SENSITIVE_KEYWORDS
+from src.ml.threat_classifier.artifacts import validate_model_bundle
 
 logger = get_logger(__name__)
 
@@ -411,6 +412,7 @@ class AIThreatModelService:
         try:
             with open(file_path, "rb") as f:
                 bundle = pickle.load(f)
+            validate_model_bundle(bundle)
             return bundle
         except Exception as exc:
             if kind == "email":
@@ -630,7 +632,7 @@ def train_ai_threat_models(
 
     metadata = {
         "run_id": timestamp,
-        "best_model_name": "AIThreatRiskModel",
+        "best_model_name": email_result.get("model_name", "AIThreatRiskModel"),
         "dataset_identity": {
             "email": dataset_identity(email_dataset_path),
             "url": dataset_identity(url_dataset_path),
@@ -645,6 +647,10 @@ def train_ai_threat_models(
             "email_weighted_f1": email_result["metrics"].get("weighted_f1"),
             "url_macro_f1": url_result["metrics"].get("macro_f1"),
             "url_weighted_f1": url_result["metrics"].get("weighted_f1"),
+        },
+        "candidate_models": {
+            "email": email_result.get("candidate_metrics", {}),
+            "url": url_result.get("candidate_metrics", {}),
         },
         "thresholds": THRESHOLDS,
         "baselines": {
@@ -689,17 +695,40 @@ def _train_email_model(data: pd.DataFrame) -> Dict[str, object]:
     features = build_email_feature_pipeline()
     X_train_matrix = features.fit_transform(X_train)
     X_test_matrix = features.transform(X_test)
-    model = LogisticRegression(max_iter=1000, class_weight="balanced", solver="liblinear")
-    model.fit(X_train_matrix, y_train)
+    candidates = {
+        "LogisticRegression": LogisticRegression(max_iter=1000, class_weight="balanced", solver="liblinear"),
+        "RandomForest": RandomForestClassifier(n_estimators=120, random_state=42, class_weight="balanced"),
+    }
+    candidate_metrics = {}
+    best_name = ""
+    best_model = None
+    best_score = -1.0
+    for name, candidate in candidates.items():
+        candidate.fit(X_train_matrix, y_train)
+        candidate_pred = candidate.predict(X_test_matrix)
+        candidate_scores = _positive_scores(candidate, X_test_matrix, MALICIOUS_LABELS)
+        metrics = _string_label_metrics(y_test, candidate_pred, candidate_scores)
+        candidate_metrics[name] = {
+            "macro_f1": metrics.get("macro_f1"),
+            "weighted_f1": metrics.get("weighted_f1"),
+        }
+        score = float(metrics.get("macro_f1", 0.0))
+        if score > best_score:
+            best_name = name
+            best_model = candidate
+            best_score = score
+    model = best_model
     y_pred = model.predict(X_test_matrix)
     scores = _positive_scores(model, X_test_matrix, MALICIOUS_LABELS)
     metrics = _string_label_metrics(y_test, y_pred, scores)
     errors = _text_error_rows(X_test, y_test, y_pred, model, X_test_matrix)
     return {
         "model": model,
+        "model_name": best_name,
         "features": features,
         "labels": sorted(set(y)),
         "metrics": metrics,
+        "candidate_metrics": candidate_metrics,
         "errors": errors,
     }
 
@@ -712,8 +741,29 @@ def _train_url_model(data: pd.DataFrame) -> Dict[str, object]:
     features = build_url_feature_pipeline()
     X_train_matrix = features.fit_transform(X_train)
     X_test_matrix = features.transform(X_test)
-    model = RandomForestClassifier(n_estimators=80, random_state=42, class_weight="balanced")
-    model.fit(X_train_matrix, y_train)
+    candidates = {
+        "RandomForest": RandomForestClassifier(n_estimators=80, random_state=42, class_weight="balanced"),
+        "LogisticRegression": LogisticRegression(max_iter=1000, class_weight="balanced", solver="liblinear"),
+    }
+    candidate_metrics = {}
+    best_name = ""
+    best_model = None
+    best_score = -1.0
+    for name, candidate in candidates.items():
+        candidate.fit(X_train_matrix, y_train)
+        candidate_pred = candidate.predict(X_test_matrix)
+        candidate_scores = _positive_scores(candidate, X_test_matrix, {"phishing", "suspicious"})
+        metrics = _string_label_metrics(y_test, candidate_pred, candidate_scores)
+        candidate_metrics[name] = {
+            "macro_f1": metrics.get("macro_f1"),
+            "weighted_f1": metrics.get("weighted_f1"),
+        }
+        score = float(metrics.get("macro_f1", 0.0))
+        if score > best_score:
+            best_name = name
+            best_model = candidate
+            best_score = score
+    model = best_model
     y_pred = model.predict(X_test_matrix)
     scores = _positive_scores(model, X_test_matrix, {"phishing", "suspicious"})
     metrics = _string_label_metrics(y_test, y_pred, scores)
@@ -721,9 +771,11 @@ def _train_url_model(data: pd.DataFrame) -> Dict[str, object]:
     errors = _url_error_rows(X_test, y_test, y_pred, model, X_test_matrix)
     return {
         "model": model,
+        "model_name": best_name,
         "features": features,
         "labels": sorted(set(y)),
         "metrics": metrics,
+        "candidate_metrics": candidate_metrics,
         "thresholds": thresholds,
         "errors": errors,
     }

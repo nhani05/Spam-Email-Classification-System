@@ -1,3 +1,3 @@
-from src.ml.threat_classifier.legacy import train_ai_threat_models
+from src.ml.threat_classifier.lifecycle import build_canonical_datasets, train_ai_threat_models
 
-__all__ = ["train_ai_threat_models"]
+__all__ = ["build_canonical_datasets", "train_ai_threat_models"]
