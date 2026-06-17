@@ -69,7 +69,7 @@ adaptive threat intelligence smoke passed
 Tạo database:
 
 ```bash
-mysql -u root -p < db/db.sql
+mysql -u root -p < database/schema.sql
 ```
 
 Tạo file `.env`:
@@ -425,7 +425,7 @@ Kiểm tra:
 
 - MySQL đang chạy.
 - `.env` đúng user/password/database.
-- Đã chạy `mysql -u root -p < db/db.sql`.
+- Đã chạy `mysql -u root -p < database/schema.sql`.
 
 ### QR Không Đọc Được
 
