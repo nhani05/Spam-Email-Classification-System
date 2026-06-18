@@ -1,22 +1,24 @@
 # Giai Thich Cau Truc Thu Muc Du An
 
-Tai lieu nay mo ta cau truc feature-based hien tai cua du an Spam Email Classification System.
+Cap nhat: 18/06/2026
+
+Tai lieu nay mo ta cau truc feature-based hien tai cua du an MailGuard AI sau khi bo cac module phan tich rule-based URL/QR/threat.
 
 ## Tong Quan
-
-Du an duoc sap xep theo muc tieu demo:
 
 - `app.py` la entrypoint Streamlit.
 - `src/features/` gom code theo tung tinh nang nguoi dung nhin thay.
 - `src/shared/` gom helper dung chung.
 - `src/infrastructure/` gom adapter ha tang nhu database.
-- `data/`, `outputs/`, `database/`, `docs/`, `scripts/` nam ngoai source code de de quan sat khi demo.
+- `data/` chua dataset va model fallback co the version trong repo.
+- `outputs/` chua artifact sinh ra khi train/chay local, khong nen commit.
+- `docs/` chua tai lieu cau truc va demo.
 
 ## Root Project
 
 `app.py`
 
-Entrypoint Streamlit cua ung dung:
+Entrypoint Streamlit:
 
 ```bash
 streamlit run app.py
@@ -28,87 +30,83 @@ Tai lieu tong quan: tinh nang, cai dat, cau hinh database, cau hinh model va cac
 
 `requirements.txt`, `pyproject.toml`, `uv.lock`
 
-File quan ly moi truong Python va dependencies.
+Quan ly moi truong Python va dependencies.
+
+`.env`
+
+Bien moi truong ket noi MySQL. File nay la local secret va khong nen commit.
 
 ## `src/`
 
-Thu muc chua package Python chinh cua ung dung.
+Package Python chinh cua ung dung.
 
-`src/config/`
+### `src/config/`
 
-Cau hinh duong dan dataset, model, vectorizer va thu muc output. File chinh la `src/config/config.py`.
+`config.py` cau hinh:
 
-`src/features/`
+- Dataset train mac dinh.
+- Thu muc output.
+- Logic tu tim spam classifier artifact moi nhat trong `outputs/`.
+- Fallback model/vectorizer trong `data/models/v1/`.
 
-Code duoc gom theo tinh nang:
+### `src/features/`
 
-- `auth/`: dang ky, dang nhap, lich su du doan, feedback, review queue.
-- `dashboard/`: dashboard thong ke, model lab, review queue, campaign overview.
-- `email_summarizer/`: UI tom tat email va script train summarizer.
-- `rag_chatbot/`: chatbot hoi dap tren noi dung email.
-- `spam_classifier/`: ingestion, transformation, training, prediction pipeline va model lab cho spam classifier.
-- `threat_intelligence/`: URL risk, QR/quishing, phishing detector, email threat analyzer, taxonomy, risk aggregator va campaign intelligence.
+Code chia theo tinh nang:
 
-`src/infrastructure/`
+- `auth/`: dang ky, dang nhap, dang xuat, lich su, feedback, review queue.
+- `dashboard/`: dashboard Spam/Ham, review queue va Model Lab view.
+- `email_summarizer/`: local AI summarizer cho van ban paste hoac MBOX.
+- `rag_chatbot/`: RAG chatbot tren MBOX bang FAISS va local model.
+- `spam_classifier/`: data ingestion, transformation, training, prediction pipeline va Model Lab.
 
-Adapter ket noi he thong ngoai. Hien tai co `src/infrastructure/database/db.py` cho MySQL.
+### `src/infrastructure/`
 
-`src/shared/`
+Adapter ha tang.
 
-Helper dung chung giua cac feature:
+- `database/db.py`: ket noi MySQL, execute/query helper va health check.
+- `src/infrastructure/database/schema.sql`: tao database `spam_detection`, user, history, feedback va review queue. Mot so bang threat metadata/campaign co the con trong schema de tuong thich du lieu cu, nhung app hien tai khong ghi cac metadata nay.
 
-- `email_utils.py`: tach body email, lam sach text, lay nguoi gui/nhan.
+### `src/shared/`
+
+Helper dung chung:
+
+- `email_utils.py`: tach body email, lam sach text, lay metadata email.
 - `logger.py`: logger dung chung.
 - `state.py`: state object cho training va prediction.
 
 ## `data/`
 
-Chua dataset va model mau duoc version theo repo.
+Du lieu va artifact fallback duoc version trong repo.
 
-`data/dataset/`
-
-Dataset huan luyen mac dinh, hien tai la `data/dataset/dataset.csv`.
-
-`data/models/v1/`
-
-Model va vectorizer fallback neu chua co artifact hop le trong `outputs/`.
+- `data/dataset/dataset.csv`: dataset huan luyen mac dinh.
+- `data/models/v1/model.pkl`: spam classifier fallback.
+- `data/models/v1/feature.pkl`: vectorizer/feature pipeline fallback.
 
 ## `outputs/`
 
-Artifact sinh ra khi train/chay local. Cac thu muc model nen dat ten theo tinh nang:
+Artifact sinh ra khi train hoac chay local AI.
 
-- `outputs/email_spam_classifier/`
-- `outputs/email_summarizer_vi/`
-- `outputs/email_phishing_detector_vi/`
+Dang co cac kieu thu muc:
+
+- `outputs/<timestamp>/`: artifact spam classifier tu cac lan train cu.
+- `outputs/email_summarizer_vi/`: local summarizer model.
+- `outputs/my_tiny_summarizer/`: artifact thu nghiem summarizer.
 
 Thu muc nay la runtime output va khong nen commit.
 
-## `database/`
-
-Tai nguyen database tach khoi package code.
-
-`database/schema.sql`
-
-Schema MySQL chinh, bao gom login, lich su du doan va cac bang Adaptive Threat Intelligence.
-
 ## `docs/`
 
-Tai lieu du an, huong dan demo, roadmap va phan cong tinh nang.
+Tai lieu du an:
 
-## `scripts/`
-
-Smoke test va tien ich demo:
-
-```bash
-python scripts\smoke_adaptive_threat_intelligence.py
-```
+- `HUONG_DAN_DEMO_DU_AN.md`: demo cac feature hien co.
+- `PROJECT_STRUCTURE_LOCAL.md`: giai thich cau truc thu muc.
 
 ## Nguyen Tac Khi Them File Moi
 
-- Code cua mot tinh nang: dat trong `src/features/<ten_tinh_nang>/`.
+- Code cua mot tinh nang nguoi dung thay: dat trong `src/features/<ten_tinh_nang>/`.
 - Helper dung chung: dat trong `src/shared/`.
 - Adapter ha tang: dat trong `src/infrastructure/`.
-- SQL schema: dat trong `database/`.
+- SQL schema/migration: dat trong `src/infrastructure/database/`.
 - Script chay mot lan hoac smoke test: dat trong `scripts/`.
-- Dataset/model mau can version: dat trong `data/`.
-- Artifact sinh ra khi chay/train: dat trong `outputs/`, khong commit.
+- Dataset/model fallback can version: dat trong `data/`.
+- Artifact sinh ra khi train/chay demo: dat trong `outputs/`, khong commit.
