@@ -1,0 +1,7 @@
+Which emails mention invoices or payment?
+Which emails contain suspicious links?
+Which messages are safe business updates?
+Summarize the main security alerts in this mailbox.
+Which email asks the user to verify a password?
+What should the operations team prepare before Friday?
+

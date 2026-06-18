@@ -1,0 +1,14 @@
+SAFE URLS
+https://www.example.com/company/news
+https://portal.example.com/billing/invoices
+https://support.example.com/help/security
+
+SUSPICIOUS URLS
+http://secure-login-example.com/account/verify
+http://billing-update-example.com/invoice/review
+http://reward-center.example/claim-free-prize
+http://password-reset-example.com/mailbox/restore
+
+COPY-PASTE PHISHING TEXT
+Your mailbox storage is full. Verify your password immediately at http://password-reset-example.com/mailbox/restore or your account will be disabled today.
+

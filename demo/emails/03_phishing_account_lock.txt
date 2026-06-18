@@ -1,0 +1,11 @@
+Security Alert: Your account will be locked today
+
+We detected unusual login activity on your account.
+To avoid permanent suspension, verify your password immediately using the secure portal below.
+
+Verification link: http://secure-login-example.com/account/verify
+
+If you do not complete verification within 30 minutes, your email account and all stored files will be disabled.
+
+Support Team
+

@@ -1,0 +1,11 @@
+Dear customer,
+
+Your monthly invoice for cloud hosting services is now available.
+The payment deadline is Friday, and the total amount due is $128.50.
+
+Please sign in through the normal customer portal or contact the billing department if you notice any incorrect charges.
+No password reset or payment card verification is required from this email.
+
+Best regards,
+Cloud Billing Team
+

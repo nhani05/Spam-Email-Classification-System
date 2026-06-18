@@ -1,0 +1,15 @@
+Subject: Weekly Operations Summary and Follow-up Items
+
+Hello team,
+
+This week we completed the first round of testing for the email security dashboard. The classification page is stable, and the batch MBOX workflow can process a mixed mailbox and export results to CSV. The dashboard now shows the total number of analyzed emails, the Spam and Ham ratio, and a recent activity table for the signed-in user.
+
+The support team reported that several users want a clearer way to review suspicious messages. In response, we added a feedback workflow so analysts can mark a prediction as correct or incorrect. Incorrect feedback is added to the review queue, where it can later be approved and used as training evidence.
+
+For the next sprint, the main priorities are improving the phishing detector test set, preparing a more realistic QR phishing demo, and validating the local summarization model on long email threads. We also need to confirm that the RAG chatbot can answer questions about invoices, meetings, security alerts, and suspicious links inside uploaded MBOX files.
+
+Please prepare your notes before Friday afternoon. During the review meeting, we will decide which examples should be included in the final presentation and which items can be deferred until after the project defense.
+
+Regards,
+Operations Lead
+

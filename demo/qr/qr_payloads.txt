@@ -1,0 +1,6 @@
+qr_phishing_login.png
+http://secure-login-example.com/account/verify
+
+qr_safe_company_page.png
+https://www.example.com/company/news
+

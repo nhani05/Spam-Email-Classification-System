@@ -1,0 +1,11 @@
+Urgent Payment Notice
+
+Your latest invoice is overdue and your company account is scheduled for restriction.
+Open the payment document and confirm your card number, password, and one-time code.
+
+Payment portal: http://billing-update-example.com/invoice/review
+
+Failure to verify this payment today may result in a service interruption.
+
+Accounts Department
+
